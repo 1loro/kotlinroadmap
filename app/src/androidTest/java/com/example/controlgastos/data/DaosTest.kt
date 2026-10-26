@@ -21,7 +21,7 @@ class DaosTest {
     private lateinit var db: GastosDatabase
 
     @Before fun abrir() {
-        db = GastosDatabase.construir(ApplicationProvider.getApplicationContext(), enMemoria = true)
+        db = GastosDatabase.construirEnMemoria(ApplicationProvider.getApplicationContext())
     }
 
     @After fun cerrar() = db.close()
