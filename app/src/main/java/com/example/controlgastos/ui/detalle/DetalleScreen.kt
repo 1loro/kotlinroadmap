@@ -11,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -44,6 +45,9 @@ import java.time.LocalDate
 @Composable
 fun DetalleScreen(
     movimiento: Movimiento?,
+    // Room responde de forma asíncrona: mientras tanto `movimiento` es null
+    // pero eso NO significa que no exista.
+    cargando: Boolean,
     onVolver: () -> Unit,
     onEliminar: (Long) -> Unit,
 ) {
@@ -70,7 +74,7 @@ fun DetalleScreen(
     ) { innerPadding ->
         if (movimiento == null) {
             Box(Modifier.fillMaxSize().padding(innerPadding), contentAlignment = Alignment.Center) {
-                Text("El movimiento no existe")
+                if (cargando) CircularProgressIndicator() else Text("El movimiento no existe")
             }
             return@Scaffold
         }
@@ -128,6 +132,6 @@ fun DetalleScreen(
 @Composable
 private fun DetallePreview() {
     ControlGastosTheme {
-        DetalleScreen(Movimiento(1, "Supermercado", 95_400.0, Categoria.COMIDA, LocalDate.now()), {}, {})
+        DetalleScreen(Movimiento(1, "Supermercado", 95_400.0, Categoria.COMIDA, LocalDate.now()), cargando = false, {}, {})
     }
 }

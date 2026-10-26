@@ -18,9 +18,10 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         Log.d(TAG, "onCreate (savedInstanceState = $savedInstanceState)")
         enableEdgeToEdge()
+        val container = (application as GastosApplication).container
         setContent {
             ControlGastosTheme {
-                GastosApp()
+                GastosApp(container)
             }
         }
     }

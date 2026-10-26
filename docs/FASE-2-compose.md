@@ -37,6 +37,8 @@ Entregable cumplido: app multipantalla con navegación y lista interactiva, sin 
 - `rememberSaveable` también sobrevive a la rotación, porque guarda en el `Bundle`. Sirve para valores simples (texto de un campo, filtro elegido).
 - Prueba esto: escribe algo en el formulario y rota el emulador. El texto se mantiene. Ahora agrega un movimiento, vuelve al Inicio y rota: **el movimiento desaparece**, porque `GastosState` usa `remember`. Esa limitación es intencional y se resuelve en la Fase 4 con `ViewModel`.
 
+> **Nota (desde la Fase 3):** `GastosState` se eliminó y los movimientos viven en Room, así que ya no desaparecen. Para ver la versión de la Fase 2: `git show f938263:app/src/main/java/com/example/controlgastos/ui/GastosState.kt`.
+
 **State hoisting (elevación de estado).** Las pantallas no guardan los datos: los reciben como parámetros (`movimientos`) y avisan de los eventos con lambdas (`onMovimientoClick`). Así se pueden previsualizar y testear con datos falsos. Los `@Preview` lo demuestran.
 
 **Modifier.** Su orden importa: `.clickable().padding(16.dp)` hace clicable también el área del padding, y `.padding().clickable()` no.

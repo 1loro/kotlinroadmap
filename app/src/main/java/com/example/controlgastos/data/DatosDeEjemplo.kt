@@ -4,8 +4,8 @@ import com.example.controlgastos.model.Categoria
 import com.example.controlgastos.model.Movimiento
 import java.time.LocalDate
 
-// Fase 2: datos en memoria para construir la UI. En la Fase 3 se reemplazan
-// por una base de datos Room.
+// Datos con los que arranca la app la primera vez (ver GastosDatabase), y
+// que usan los @Preview. Los ids se ignoran al insertarlos en Room.
 object DatosDeEjemplo {
     fun movimientos(hoy: LocalDate = LocalDate.now()): List<Movimiento> = listOf(
         Movimiento(1, "Sueldo de octubre", 850_000.0, Categoria.SUELDO, hoy.withDayOfMonth(1)),

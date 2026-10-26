@@ -32,13 +32,16 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.controlgastos.data.DatosDeEjemplo
 import com.example.controlgastos.model.Categoria
+import com.example.controlgastos.model.Cotizacion
 import com.example.controlgastos.model.Movimiento
 import com.example.controlgastos.model.Resumen
 import com.example.controlgastos.model.resumen
 import com.example.controlgastos.ui.componentes.MovimientoItem
 import com.example.controlgastos.ui.componentes.colorMonto
+import com.example.controlgastos.ui.formatearDolares
 import com.example.controlgastos.ui.formatearMonto
 import com.example.controlgastos.ui.theme.ControlGastosTheme
+import java.time.Instant
 
 private const val ULTIMOS = 5
 
@@ -46,6 +49,8 @@ private const val ULTIMOS = 5
 @Composable
 fun InicioScreen(
     movimientos: List<Movimiento>,
+    // Puede ser null (sin conexión y sin caché): la tarjeta lo omite.
+    dolarOficial: Cotizacion?,
     onNuevoMovimiento: () -> Unit,
     onVerTodos: () -> Unit,
     onMovimientoClick: (Long) -> Unit,
@@ -69,7 +74,7 @@ fun InicioScreen(
                 bottom = innerPadding.calculateBottomPadding() + 88.dp, // espacio para el FAB
             ),
         ) {
-            item { TarjetaSaldo(resumen, Modifier.padding(16.dp)) }
+            item { TarjetaSaldo(resumen, dolarOficial, Modifier.padding(16.dp)) }
 
             if (resumen.gastoPorCategoria.isNotEmpty()) {
                 item { TituloSeccion("Gastos por categoría") }
@@ -95,7 +100,7 @@ fun InicioScreen(
 }
 
 @Composable
-private fun TarjetaSaldo(resumen: Resumen, modifier: Modifier = Modifier) {
+private fun TarjetaSaldo(resumen: Resumen, dolarOficial: Cotizacion?, modifier: Modifier = Modifier) {
     Card(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -110,6 +115,12 @@ private fun TarjetaSaldo(resumen: Resumen, modifier: Modifier = Modifier) {
                 style = MaterialTheme.typography.displaySmall,
                 fontWeight = FontWeight.Bold,
             )
+            dolarOficial?.venta?.takeIf { it > 0 }?.let { venta ->
+                Text(
+                    "≈ ${formatearDolares(resumen.saldo / venta)} al dólar oficial",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
             Spacer(Modifier.height(16.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
                 DatoResumen("Ingresos", resumen.ingresos, esGasto = false)
@@ -162,6 +173,10 @@ private fun BarraCategoria(categoria: Categoria, total: Double, totalGastos: Dou
 @Composable
 private fun InicioPreview() {
     ControlGastosTheme {
-        InicioScreen(DatosDeEjemplo.movimientos(), {}, {}, {})
+        InicioScreen(
+            DatosDeEjemplo.movimientos(),
+            Cotizacion(Cotizacion.OFICIAL, "Oficial", 1510.0, 1560.0, Instant.now()),
+            {}, {}, {},
+        )
     }
 }

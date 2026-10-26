@@ -1,13 +1,17 @@
 package com.example.controlgastos
 
 import com.example.controlgastos.model.Categoria
+import com.example.controlgastos.model.Cotizacion
 import com.example.controlgastos.model.Movimiento
 import com.example.controlgastos.model.resumen
-import com.example.controlgastos.ui.GastosState
+import com.example.controlgastos.ui.cotizaciones.CotizacionesUiState
+import com.example.controlgastos.ui.cotizaciones.Refresco
+import com.example.controlgastos.ui.cotizaciones.calcularEstado
 import com.example.controlgastos.ui.formulario.parsearMonto
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
+import java.time.Instant
 import java.time.LocalDate
 
 class LogicaTest {
@@ -42,16 +46,33 @@ class LogicaTest {
         assertNull(parsearMonto("abc"))
     }
 
-    @Test fun `estado agrega con id nuevo, ordena por fecha y elimina`() {
-        val state = GastosState(listOf(Movimiento(7, "Viejo", 10.0, Categoria.OCIO, hoy.minusDays(3))))
+    // --- Estados de la pantalla de cotizaciones (carga / éxito / error) ---
 
-        state.agregar(Movimiento(0, "Nuevo", 20.0, Categoria.COMIDA, hoy))
+    private val oficial = Cotizacion("oficial", "Oficial", 1510.0, 1560.0, Instant.EPOCH)
 
-        assertEquals(listOf("Nuevo", "Viejo"), state.movimientos.map { it.descripcion })
-        assertEquals(8L, state.movimientos.first().id)
+    @Test fun `sin cache y pidiendo muestra cargando`() {
+        assertEquals(CotizacionesUiState.Cargando, calcularEstado(null, Refresco.EnCurso))
+        assertEquals(CotizacionesUiState.Cargando, calcularEstado(emptyList(), Refresco.EnCurso))
+    }
 
-        state.eliminar(7)
-        assertEquals(listOf("Nuevo"), state.movimientos.map { it.descripcion })
-        assertNull(state.buscar(7))
+    @Test fun `sin cache y con fallo muestra error`() {
+        assertEquals(
+            CotizacionesUiState.Error("Sin conexión"),
+            calcularEstado(emptyList(), Refresco.Fallido("Sin conexión")),
+        )
+    }
+
+    @Test fun `con cache muestra datos aunque falle, con aviso`() {
+        assertEquals(
+            CotizacionesUiState.Exito(listOf(oficial), actualizando = false, aviso = "Sin conexión"),
+            calcularEstado(listOf(oficial), Refresco.Fallido("Sin conexión")),
+        )
+    }
+
+    @Test fun `con cache y pidiendo muestra datos e indicador de actualizacion`() {
+        assertEquals(
+            CotizacionesUiState.Exito(listOf(oficial), actualizando = true),
+            calcularEstado(listOf(oficial), Refresco.EnCurso),
+        )
     }
 }
