@@ -60,5 +60,5 @@ Ya verificado al abrir la app: `onCreate → onStart → onResume`.
 1. Ejecuta la app desde Android Studio (▶) y abre Logcat filtrando por `CicloDeVida`.
 2. Pulsa *Home* y vuelve a la app: ¿qué métodos se llaman?
 3. **Rota el emulador.** Verás `onDestroy` y luego `onCreate` otra vez. La Activity se destruye y se recrea en cada rotación, y por eso en la Fase 4 usaremos `ViewModel`.
-4. Cambia `Saludo("Mundo")` por tu nombre y mira el `@Preview` en la vista *Split* sin ejecutar la app.
+4. Abre `ui/componentes/MovimientoItem.kt` en la vista *Split*: el `@Preview` dibuja el componente sin ejecutar la app. Cambia la descripción del ejemplo y mira cómo se actualiza. (El "Hola Mundo" original está en el historial de Git: `git show 12b76b7`.)
 5. Cambia el color `primary` de `LightColors` en `Theme.kt` y activa el modo oscuro del emulador.
