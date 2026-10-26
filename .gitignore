@@ -1,0 +1,22 @@
+*.iml
+.gradle
+/local.properties
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
+# Salidas de build de cualquier módulo y caché de Kotlin 2
+build/
+.kotlin/
+
+# Documento interno de capacitación: no se publica en el repo
+roadmap-android-kotlin.pdf
