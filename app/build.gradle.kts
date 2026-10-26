@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -6,6 +8,24 @@ plugins {
     alias(libs.plugins.room)
     alias(libs.plugins.hilt)
 }
+
+// --- Configuración externa (no se escribe en el código) ---
+// URL de la API: se puede cambiar sin tocar código, por ejemplo para apuntar a
+// un servidor de pruebas:  ./gradlew assembleDebug -PdolarApiUrl=https://...
+// o con la variable de entorno DOLAR_API_URL (así lo haría un pipeline de CI).
+val dolarApiUrl: String = providers.gradleProperty("dolarApiUrl")
+    .orElse(providers.environmentVariable("DOLAR_API_URL"))
+    .getOrElse("https://dolarapi.com/")
+
+// Firma de release: los datos salen de keystore.properties (ignorado por Git)
+// o de variables de entorno (secretos de CI). Ver docs/FASE-5-profesional.md.
+val firma = Properties().apply {
+    val archivo = rootProject.file("keystore.properties")
+    if (archivo.exists()) archivo.inputStream().use { load(it) }
+}
+fun datoFirma(clave: String, variable: String): String? =
+    firma.getProperty(clave) ?: providers.environmentVariable(variable).orNull
+val hayFirmaRelease = datoFirma("storeFile", "KEYSTORE_PATH") != null
 
 android {
     namespace = "com.example.controlgastos"
@@ -23,13 +43,41 @@ android {
 
         // Runner propio: arranca los tests con la Application de prueba de Hilt.
         testInstrumentationRunner = "com.example.controlgastos.HiltTestRunner"
+
+        // Constantes que el código lee como BuildConfig.DOLAR_API_URL.
+        buildConfigField("String", "DOLAR_API_URL", "\"$dolarApiUrl\"")
+    }
+
+    signingConfigs {
+        if (hayFirmaRelease) {
+            create("release") {
+                storeFile = file(datoFirma("storeFile", "KEYSTORE_PATH")!!)
+                storePassword = datoFirma("storePassword", "KEYSTORE_PASSWORD")
+                keyAlias = datoFirma("keyAlias", "KEY_ALIAS")
+                keyPassword = datoFirma("keyPassword", "KEY_PASSWORD")
+            }
+        }
     }
 
     buildTypes {
+        debug {
+            // La versión debug se instala JUNTO a la release (paquete distinto).
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
+            // En debug se permiten capturas de pantalla (para desarrollar y testear).
+            buildConfigField("boolean", "BLOQUEAR_CAPTURAS", "false")
+        }
         release {
+            buildConfigField("boolean", "BLOQUEAR_CAPTURAS", "true")
+            // Sin keystore propio se firma con la clave de debug: sirve para
+            // PROBAR la release localmente, nunca para publicarla.
+            signingConfig = if (hayFirmaRelease) signingConfigs.getByName("release") else signingConfigs.getByName("debug")
+            // R8: elimina código sin usar, optimiza y OFUSCA (renombra clases y
+            // métodos) toda la app. La plantilla original limitaba R8 a las
+            // librerías (packageScope) y dejaba nuestro código legible al
+            // decompilar el APK.
             optimization {
                 enable = true
-                packageScope = setOf("androidx.**", "kotlin.**", "kotlinx.**")
             }
         }
     }
@@ -51,6 +99,9 @@ room {
 
 dependencies {
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.fragment.ktx)
+    implementation(libs.androidx.biometric)
+    implementation(libs.sqlcipher.android)
     // Explícita para fijar UNA versión de corrutinas en la app y en los tests.
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.androidx.activity.compose)
