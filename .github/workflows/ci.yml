@@ -1,0 +1,120 @@
+# Integración continua: en cada Pull Request y en cada push a main, GitHub
+# compila la app y corre los tests en una máquina limpia. Si algo falla, el
+# PR queda marcado en rojo antes de que nadie lo integre.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# Principio de mínimo privilegio: el token del workflow solo puede leer el repo.
+permissions:
+  contents: read
+
+# Si llega un push nuevo al mismo PR, se cancela la corrida anterior.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Rápido (~5 min): tests de JVM, análisis estático y compilación.
+  build:
+    name: Tests unitarios, Lint y build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 25
+
+      # Configura Gradle con caché entre corridas.
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Tests unitarios, Lint y APK debug
+        run: ./gradlew :fase0-kotlin:test :app:testDebugUnitTest :app:lintDebug :app:assembleDebug
+
+      - name: Guardar reportes
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: reportes
+          path: |
+            app/build/reports/
+            fase0-kotlin/build/reports/
+
+  # Lento (~15 min): tests instrumentados en un emulador.
+  tests-instrumentados:
+    name: Tests instrumentados (emulador)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 25
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      # El emulador necesita aceleración por hardware (KVM) en Linux.
+      - name: Habilitar KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - uses: reactivecircus/android-emulator-runner@v2.38.0
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          disable-animations: true
+          script: ./gradlew :app:connectedDebugAndroidTest
+
+  # Solo en main: genera el App Bundle (.aab) firmado, listo para Play Store.
+  release:
+    name: App Bundle de release
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [build, tests-instrumentados]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 25
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      # La clave de firma NUNCA está en el repo: vive en los "secrets" del
+      # repositorio (Settings → Secrets and variables → Actions). Si no están
+      # configurados, Gradle firma con la clave de debug (no publicable).
+      - name: Restaurar keystore desde los secrets
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/release.jks"
+            echo "KEYSTORE_PATH=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
+          else
+            echo "::warning::Sin secret KEYSTORE_BASE64: el bundle se firma con la clave de debug."
+          fi
+
+      - name: Generar App Bundle
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: ./gradlew :app:bundleRelease
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: app-release-aab
+          path: app/build/outputs/bundle/release/*.aab
