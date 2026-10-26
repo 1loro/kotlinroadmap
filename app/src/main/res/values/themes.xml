@@ -1,0 +1,5 @@
+<resources>
+    <!-- Tema de la ventana (antes de que Compose dibuje). Los colores reales
+         de la app se definen en Compose: ui/theme/Theme.kt -->
+    <style name="Theme.ControlGastos" parent="android:Theme.Material.Light.NoActionBar" />
+</resources>
