@@ -61,4 +61,4 @@ Ya verificado al abrir la app: `onCreate → onStart → onResume`.
 2. Pulsa *Home* y vuelve a la app: ¿qué métodos se llaman?
 3. **Rota el emulador.** Verás `onDestroy` y luego `onCreate` otra vez. La Activity se destruye y se recrea en cada rotación, y por eso en la Fase 4 usaremos `ViewModel`.
 4. Cambia `Saludo("Mundo")` por tu nombre y mira el `@Preview` en la vista *Split* sin ejecutar la app.
-5. Cambia el color `Verde` en `Theme.kt` y activa el modo oscuro del emulador.
+5. Cambia el color `primary` de `LightColors` en `Theme.kt` y activa el modo oscuro del emulador.
