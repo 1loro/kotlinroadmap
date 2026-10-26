@@ -21,8 +21,9 @@ App Android nativa para registrar ingresos y gastos y consultar la cotización d
 |---|---|
 | Lenguaje | Kotlin 2.4, corrutinas, Flow |
 | UI | Jetpack Compose, Material 3, Navigation Compose (rutas type-safe) |
+| Arquitectura | MVVM (ViewModel + StateFlow), capas domain / data / ui, Hilt |
 | Datos | Room (SQLite), Retrofit, OkHttp, kotlinx.serialization |
-| Tests | JUnit 4, kotlinx-coroutines-test, MockWebServer, Compose UI Test |
+| Tests | JUnit 4, kotlinx-coroutines-test, Turbine, MockWebServer, Compose UI Test, Hilt Testing |
 | Build | Gradle (Kotlin DSL) con catálogo de versiones, AGP 9, KSP |
 
 ## Estado del roadmap
@@ -33,8 +34,8 @@ App Android nativa para registrar ingresos y gastos y consultar la cotización d
 | 1 | Conceptos de Android: proyecto, Gradle, ciclo de vida | ✅ | [docs/FASE-1-android.md](docs/FASE-1-android.md) |
 | 2 | UI con Jetpack Compose: multipantalla y navegación | ✅ | [docs/FASE-2-compose.md](docs/FASE-2-compose.md) |
 | 3 | Datos, red y persistencia: Room, Retrofit, offline-first | ✅ | [docs/FASE-3-datos.md](docs/FASE-3-datos.md) |
-| 4 | Arquitectura: MVVM, capas, Hilt, tests | 🚧 En curso | |
-| 5 | Contexto bancario: seguridad, CI/CD, publicación | ⏳ | |
+| 4 | Arquitectura: MVVM, capas domain/data/ui, Hilt, tests de ViewModels | ✅ | [docs/FASE-4-arquitectura.md](docs/FASE-4-arquitectura.md) |
+| 5 | Contexto bancario: seguridad, CI/CD, publicación | 🚧 Siguiente | |
 
 Cada guía explica qué se hizo y por qué, e incluye ejercicios de práctica.
 
@@ -43,9 +44,9 @@ Cada guía explica qué se hizo y por qué, e incluye ejercicios de práctica.
 ```
 ├── app/                         App Android
 │   ├── src/main/java/.../
-│   │   ├── data/                Room (local/), Retrofit (remote/), repositorios
-│   │   ├── model/               Modelos de la app (Movimiento, Cotizacion)
-│   │   └── ui/                  Pantallas Compose, navegación y tema
+│   │   ├── domain/              Kotlin puro: modelos, interfaces de repositorio, casos de uso
+│   │   ├── data/                Room (local/), Retrofit (remote/), repositorios, módulos Hilt (di/)
+│   │   └── ui/                  Pantallas Compose + ViewModel por pantalla, navegación, tema
 │   ├── src/test/                Tests unitarios (JVM)
 │   ├── src/androidTest/         Tests instrumentados (emulador)
 │   └── schemas/                 Esquemas exportados de Room

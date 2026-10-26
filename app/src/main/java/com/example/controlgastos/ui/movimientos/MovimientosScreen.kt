@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
@@ -22,37 +23,37 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.controlgastos.data.DatosDeEjemplo
-import com.example.controlgastos.model.Movimiento
-import com.example.controlgastos.model.TipoMovimiento
 import com.example.controlgastos.ui.componentes.MovimientoItem
 import com.example.controlgastos.ui.theme.ControlGastosTheme
 
-enum class Filtro(val etiqueta: String, val tipo: TipoMovimiento?) {
-    TODOS("Todos", null),
-    INGRESOS("Ingresos", TipoMovimiento.INGRESO),
-    GASTOS("Gastos", TipoMovimiento.GASTO),
+@Composable
+fun MovimientosRuta(
+    onNuevoMovimiento: () -> Unit,
+    onMovimientoClick: (Long) -> Unit,
+    viewModel: MovimientosViewModel = hiltViewModel(),
+) {
+    val estado by viewModel.uiState.collectAsStateWithLifecycle()
+    MovimientosScreen(estado, viewModel::elegirFiltro, onNuevoMovimiento, onMovimientoClick)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MovimientosScreen(
-    movimientos: List<Movimiento>,
+    estado: MovimientosUiState,
+    onFiltro: (Filtro) -> Unit,
     onNuevoMovimiento: () -> Unit,
     onMovimientoClick: (Long) -> Unit,
 ) {
-    // rememberSaveable (a diferencia de remember) sobrevive a la rotación,
-    // porque guarda el valor en el Bundle de la Activity. Sirve para valores
-    // simples como este enum.
-    var filtro by rememberSaveable { mutableStateOf(Filtro.TODOS) }
-    val visibles = movimientos.filter { filtro.tipo == null || it.tipo == filtro.tipo }
+    // El filtro vive en el ViewModel (con SavedStateHandle): ya no hace falta
+    // rememberSaveable aquí.
+    val visibles = estado.movimientos
 
     Scaffold(
         topBar = { TopAppBar(title = { Text("Movimientos") }) },
@@ -69,14 +70,16 @@ fun MovimientosScreen(
             ) {
                 Filtro.entries.forEach { opcion ->
                     FilterChip(
-                        selected = filtro == opcion,
-                        onClick = { filtro = opcion },
+                        selected = estado.filtro == opcion,
+                        onClick = { onFiltro(opcion) },
                         label = { Text(opcion.etiqueta) },
                     )
                 }
             }
 
-            if (visibles.isEmpty()) {
+            if (estado.cargando) {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+            } else if (visibles.isEmpty()) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text(
                         "No hay movimientos para mostrar",
@@ -106,6 +109,6 @@ fun MovimientosScreen(
 @Composable
 private fun MovimientosPreview() {
     ControlGastosTheme {
-        MovimientosScreen(DatosDeEjemplo.movimientos(), {}, {})
+        MovimientosScreen(MovimientosUiState(movimientos = DatosDeEjemplo.movimientos()), {}, {}, {})
     }
 }

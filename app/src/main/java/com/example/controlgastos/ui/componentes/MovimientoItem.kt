@@ -20,8 +20,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.controlgastos.model.Categoria
-import com.example.controlgastos.model.Movimiento
+import com.example.controlgastos.domain.model.Categoria
+import com.example.controlgastos.domain.model.Movimiento
 import com.example.controlgastos.ui.formatearFecha
 import com.example.controlgastos.ui.formatearMonto
 import com.example.controlgastos.ui.theme.ControlGastosTheme

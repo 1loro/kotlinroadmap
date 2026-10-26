@@ -1,5 +1,7 @@
 # Fase 3 — Datos, red y persistencia
 
+> **Nota (desde la Fase 4):** `AppContainer` se reemplazó por Hilt, los repositorios se movieron a `data/repository/` (con interfaces en `domain/`) y la lógica de `CotizacionesRuta` pasó a `CotizacionesViewModel`. El código de esta fase se ve con `git show fac07a7`.
+
 Entregable cumplido: la app consume una API pública, muestra los datos y los guarda localmente. Además, los movimientos ahora persisten en una base de datos.
 
 ## Arquitectura de datos

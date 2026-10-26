@@ -28,54 +28,25 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.controlgastos.data.CotizacionesRepository
-import com.example.controlgastos.data.FalloCotizaciones
-import com.example.controlgastos.model.Cotizacion
+import com.example.controlgastos.domain.model.Cotizacion
 import com.example.controlgastos.ui.formatearFechaHora
 import com.example.controlgastos.ui.formatearMonto
 import com.example.controlgastos.ui.theme.ControlGastosTheme
-import kotlinx.coroutines.launch
 import java.time.Instant
 
-/**
- * "Ruta": conecta la pantalla con los datos y maneja los efectos (pedir a la
- * API). En la Fase 4 esta lógica se mueve a un ViewModel.
- */
 @Composable
-fun CotizacionesRuta(repositorio: CotizacionesRepository) {
-    val cache by repositorio.cotizaciones.collectAsStateWithLifecycle(initialValue = null)
-    var refresco by remember { mutableStateOf<Refresco>(Refresco.EnCurso) }
-    val scope = rememberCoroutineScope()
-
-    suspend fun actualizar() {
-        refresco = Refresco.EnCurso
-        refresco = repositorio.actualizar().fold(
-            onSuccess = { Refresco.Completado },
-            onFailure = { Refresco.Fallido((it as? FalloCotizaciones)?.mensaje ?: "Error inesperado") },
-        )
-    }
-
-    // LaunchedEffect lanza una corrutina al entrar en pantalla y la cancela
-    // al salir. Unit como clave = se ejecuta una sola vez.
-    LaunchedEffect(Unit) { actualizar() }
-
-    CotizacionesScreen(
-        estado = calcularEstado(cache, refresco),
-        onActualizar = { scope.launch { actualizar() } },
-    )
+fun CotizacionesRuta(viewModel: CotizacionesViewModel = hiltViewModel()) {
+    val estado by viewModel.uiState.collectAsStateWithLifecycle()
+    CotizacionesScreen(estado, onActualizar = viewModel::actualizar)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

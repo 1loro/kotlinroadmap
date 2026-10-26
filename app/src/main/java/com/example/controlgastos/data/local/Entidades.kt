@@ -3,14 +3,14 @@ package com.example.controlgastos.data.local
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.TypeConverter
-import com.example.controlgastos.model.Categoria
-import com.example.controlgastos.model.Cotizacion
-import com.example.controlgastos.model.Movimiento
+import com.example.controlgastos.domain.model.Categoria
+import com.example.controlgastos.domain.model.Cotizacion
+import com.example.controlgastos.domain.model.Movimiento
 import java.time.Instant
 import java.time.LocalDate
 
 // Las entidades describen TABLAS. Se mantienen separadas del modelo de la app
-// (model/) para que un cambio en la BD no obligue a tocar la UI, y viceversa.
+// (domain/model/) para que un cambio en la BD no obligue a tocar la UI, y viceversa.
 
 @Entity(tableName = "movimientos")
 data class MovimientoEntity(

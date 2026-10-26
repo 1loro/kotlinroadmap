@@ -13,11 +13,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -26,27 +23,12 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.toRoute
 import com.example.controlgastos.R
-import com.example.controlgastos.data.AppContainer
-import com.example.controlgastos.model.Cotizacion
-import com.example.controlgastos.model.Movimiento
 import com.example.controlgastos.ui.cotizaciones.CotizacionesRuta
-import com.example.controlgastos.ui.detalle.DetalleScreen
-import com.example.controlgastos.ui.formulario.FormularioScreen
-import com.example.controlgastos.ui.inicio.InicioScreen
-import com.example.controlgastos.ui.movimientos.MovimientosScreen
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
-import kotlinx.serialization.Serializable
-
-// Rutas "type-safe": cada pantalla es un tipo. Los argumentos (como el id)
-// son propiedades, así el compilador verifica que se pasen correctamente.
-@Serializable object Inicio
-@Serializable object Movimientos
-@Serializable object Cotizaciones
-@Serializable data class Detalle(val id: Long)
-@Serializable object NuevoMovimiento
+import com.example.controlgastos.ui.detalle.DetalleRuta
+import com.example.controlgastos.ui.formulario.FormularioRuta
+import com.example.controlgastos.ui.inicio.InicioRuta
+import com.example.controlgastos.ui.movimientos.MovimientosRuta
 
 private data class Pestania(val etiqueta: String, val ruta: Any, val icono: @Composable () -> Unit)
 
@@ -56,21 +38,14 @@ private val pestanias = listOf(
     Pestania("Dólar", Cotizaciones) { Icon(painterResource(R.drawable.ic_dolar), contentDescription = null) },
 )
 
-// Distingue "Room todavía no respondió" (null) de "respondió que no existe".
-private data class Consulta(val movimiento: Movimiento?)
-
+/**
+ * Solo navegación: qué pantalla se muestra y cómo se pasa de una a otra.
+ * Los datos los obtiene cada pantalla de su propio ViewModel, que Hilt crea
+ * y asocia a la entrada de navegación (vive mientras la pantalla esté en la
+ * pila, y sobrevive a la rotación).
+ */
 @Composable
-fun GastosApp(
-    container: AppContainer,
-    navController: NavHostController = rememberNavController(),
-) {
-    val movimientosRepo = container.movimientosRepository
-    val cotizacionesRepo = container.cotizacionesRepository
-
-    // Scope atado a GastosApp (no a una pantalla): una escritura en la BD no
-    // se cancela si el usuario sale de la pantalla que la inició.
-    val scope = rememberCoroutineScope()
-
+fun GastosApp(navController: NavHostController = rememberNavController()) {
     val entradaActual by navController.currentBackStackEntryAsState()
     val destinoActual = entradaActual?.destination
     // La barra inferior solo se muestra en las pantallas principales.
@@ -99,57 +74,28 @@ fun GastosApp(
             startDestination = Inicio,
             modifier = Modifier.padding(innerPadding).consumeWindowInsets(innerPadding),
         ) {
-            // Cada destino lee SUS datos dentro de su propio bloque. Si se leyeran
-            // arriba del NavHost y se pasaran por estas lambdas, cada dato nuevo
-            // cambiaría el grafo de navegación entero.
-            //
-            // collectAsStateWithLifecycle convierte un Flow en estado de Compose y
-            // deja de escucharlo cuando la app pasa a segundo plano.
             composable<Inicio> {
-                val movimientos by movimientosRepo.movimientos.collectAsStateWithLifecycle(initialValue = emptyList())
-                val cotizaciones by cotizacionesRepo.cotizaciones.collectAsStateWithLifecycle(initialValue = emptyList())
-                InicioScreen(
-                    movimientos = movimientos,
-                    dolarOficial = cotizaciones.find { it.casa == Cotizacion.OFICIAL },
+                InicioRuta(
                     onNuevoMovimiento = { navController.navigate(NuevoMovimiento) },
                     onVerTodos = { navController.irAPestania(Movimientos) },
                     onMovimientoClick = { id -> navController.navigate(Detalle(id)) },
                 )
             }
             composable<Movimientos> {
-                val movimientos by movimientosRepo.movimientos.collectAsStateWithLifecycle(initialValue = emptyList())
-                MovimientosScreen(
-                    movimientos = movimientos,
+                MovimientosRuta(
                     onNuevoMovimiento = { navController.navigate(NuevoMovimiento) },
                     onMovimientoClick = { id -> navController.navigate(Detalle(id)) },
                 )
             }
             composable<Cotizaciones> {
-                CotizacionesRuta(cotizacionesRepo)
+                CotizacionesRuta()
             }
-            composable<Detalle> { entrada ->
-                val id = entrada.toRoute<Detalle>().id
-                // remember(id): crear el Flow una sola vez, no en cada recomposición.
-                val consulta by remember(id) { movimientosRepo.movimiento(id).map(::Consulta) }
-                    .collectAsStateWithLifecycle(initialValue = null)
-                DetalleScreen(
-                    movimiento = consulta?.movimiento,
-                    cargando = consulta == null,
-                    onVolver = { navController.popBackStack() },
-                    onEliminar = { idEliminar ->
-                        navController.popBackStack()
-                        scope.launch { movimientosRepo.eliminar(idEliminar) }
-                    },
-                )
+            // El id de Detalle(id) llega al DetalleViewModel por su SavedStateHandle.
+            composable<Detalle> {
+                DetalleRuta(onVolver = { navController.popBackStack() })
             }
             composable<NuevoMovimiento> {
-                FormularioScreen(
-                    onGuardar = { movimiento ->
-                        scope.launch { movimientosRepo.agregar(movimiento) }
-                        navController.popBackStack()
-                    },
-                    onCancelar = { navController.popBackStack() },
-                )
+                FormularioRuta(onCerrar = { navController.popBackStack() })
             }
         }
     }

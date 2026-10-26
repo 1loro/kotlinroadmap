@@ -1,6 +1,6 @@
 package com.example.controlgastos.ui.cotizaciones
 
-import com.example.controlgastos.model.Cotizacion
+import com.example.controlgastos.domain.model.Cotizacion
 
 /** Estado de la última petición a la API. */
 sealed interface Refresco {

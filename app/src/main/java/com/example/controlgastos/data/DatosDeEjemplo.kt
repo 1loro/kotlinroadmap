@@ -1,7 +1,7 @@
 package com.example.controlgastos.data
 
-import com.example.controlgastos.model.Categoria
-import com.example.controlgastos.model.Movimiento
+import com.example.controlgastos.domain.model.Categoria
+import com.example.controlgastos.domain.model.Movimiento
 import java.time.LocalDate
 
 // Datos con los que arranca la app la primera vez (ver GastosDatabase), y

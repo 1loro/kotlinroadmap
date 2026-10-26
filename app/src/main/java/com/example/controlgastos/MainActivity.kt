@@ -7,21 +7,25 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import com.example.controlgastos.ui.navegacion.GastosApp
 import com.example.controlgastos.ui.theme.ControlGastosTheme
+import dagger.hilt.android.AndroidEntryPoint
 
 private const val TAG = "CicloDeVida"
 
 // Punto de entrada de la app. Los métodos on*() registran el ciclo de vida
 // de la Activity en Logcat (filtrar por la etiqueta "CicloDeVida").
+//
+// @AndroidEntryPoint: Hilt puede inyectar dependencias aquí y en los
+// ViewModels de las pantallas que contiene.
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.d(TAG, "onCreate (savedInstanceState = $savedInstanceState)")
         enableEdgeToEdge()
-        val container = (application as GastosApplication).container
         setContent {
             ControlGastosTheme {
-                GastosApp(container)
+                GastosApp()
             }
         }
     }

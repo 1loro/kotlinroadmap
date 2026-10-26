@@ -23,6 +23,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -32,8 +33,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.controlgastos.model.Categoria
-import com.example.controlgastos.model.Movimiento
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.controlgastos.domain.model.Categoria
+import com.example.controlgastos.domain.model.Movimiento
 import com.example.controlgastos.ui.componentes.IconoCategoria
 import com.example.controlgastos.ui.componentes.colorMonto
 import com.example.controlgastos.ui.formatearFecha
@@ -41,17 +44,31 @@ import com.example.controlgastos.ui.formatearMonto
 import com.example.controlgastos.ui.theme.ControlGastosTheme
 import java.time.LocalDate
 
+@Composable
+fun DetalleRuta(onVolver: () -> Unit, viewModel: DetalleViewModel = hiltViewModel()) {
+    val estado by viewModel.uiState.collectAsStateWithLifecycle()
+    val eliminado by viewModel.eliminado.collectAsStateWithLifecycle()
+
+    // Cuando el ViewModel termina de eliminar, la pantalla se cierra.
+    // LaunchedEffect(clave): se ejecuta cada vez que cambia `eliminado`.
+    LaunchedEffect(eliminado) {
+        if (eliminado) onVolver()
+    }
+
+    DetalleScreen(estado, onVolver, viewModel::eliminar)
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DetalleScreen(
-    movimiento: Movimiento?,
-    // Room responde de forma asíncrona: mientras tanto `movimiento` es null
-    // pero eso NO significa que no exista.
-    cargando: Boolean,
+    estado: DetalleUiState,
     onVolver: () -> Unit,
-    onEliminar: (Long) -> Unit,
+    onEliminar: () -> Unit,
 ) {
+    // El diálogo abierto/cerrado es estado puramente visual: puede quedarse
+    // en la pantalla, no hace falta llevarlo al ViewModel.
     var confirmarBorrado by remember { mutableStateOf(false) }
+    val movimiento = (estado as? DetalleUiState.Listo)?.movimiento
 
     Scaffold(
         topBar = {
@@ -74,7 +91,7 @@ fun DetalleScreen(
     ) { innerPadding ->
         if (movimiento == null) {
             Box(Modifier.fillMaxSize().padding(innerPadding), contentAlignment = Alignment.Center) {
-                if (cargando) CircularProgressIndicator() else Text("El movimiento no existe")
+                if (estado == DetalleUiState.Cargando) CircularProgressIndicator() else Text("El movimiento no existe")
             }
             return@Scaffold
         }
@@ -118,7 +135,7 @@ fun DetalleScreen(
             confirmButton = {
                 TextButton(onClick = {
                     confirmarBorrado = false
-                    onEliminar(movimiento.id)
+                    onEliminar()
                 }) { Text("Eliminar") }
             },
             dismissButton = {
@@ -132,6 +149,10 @@ fun DetalleScreen(
 @Composable
 private fun DetallePreview() {
     ControlGastosTheme {
-        DetalleScreen(Movimiento(1, "Supermercado", 95_400.0, Categoria.COMIDA, LocalDate.now()), cargando = false, {}, {})
+        DetalleScreen(
+            DetalleUiState.Listo(Movimiento(1, "Supermercado", 95_400.0, Categoria.COMIDA, LocalDate.now())),
+            {},
+            {},
+        )
     }
 }

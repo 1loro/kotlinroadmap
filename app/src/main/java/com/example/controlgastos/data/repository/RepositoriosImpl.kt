@@ -1,4 +1,4 @@
-package com.example.controlgastos.data
+package com.example.controlgastos.data.repository
 
 import com.example.controlgastos.data.local.CotizacionDao
 import com.example.controlgastos.data.local.MovimientoDao
@@ -6,35 +6,34 @@ import com.example.controlgastos.data.local.aEntidad
 import com.example.controlgastos.data.local.aModelo
 import com.example.controlgastos.data.remote.DolarApi
 import com.example.controlgastos.data.remote.aEntidad
-import com.example.controlgastos.model.Cotizacion
-import com.example.controlgastos.model.Movimiento
+import com.example.controlgastos.domain.model.Cotizacion
+import com.example.controlgastos.domain.model.Movimiento
+import com.example.controlgastos.domain.repository.CotizacionesRepository
+import com.example.controlgastos.domain.repository.FalloCotizaciones
+import com.example.controlgastos.domain.repository.MovimientosRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.SerializationException
 import retrofit2.HttpException
 import java.io.IOException
 import java.time.format.DateTimeParseException
+import javax.inject.Inject
 
-// Un repositorio es la ÚNICA puerta de entrada a los datos para la UI.
-// La UI no sabe si los datos vienen de Room, de la red o de ambos.
+// Implementaciones de las interfaces del dominio con Room y Retrofit.
+// `@Inject constructor`: Hilt sabe construirlas pidiendo sus dependencias.
 
-class MovimientosRepository(private val dao: MovimientoDao) {
+class MovimientosRepositoryImpl @Inject constructor(
+    private val dao: MovimientoDao,
+) : MovimientosRepository {
 
-    val movimientos: Flow<List<Movimiento>> =
+    override val movimientos: Flow<List<Movimiento>> =
         dao.observarTodos().map { lista -> lista.map { it.aModelo() } }
 
-    fun movimiento(id: Long): Flow<Movimiento?> = dao.observarPorId(id).map { it?.aModelo() }
+    override fun movimiento(id: Long): Flow<Movimiento?> = dao.observarPorId(id).map { it?.aModelo() }
 
-    suspend fun agregar(movimiento: Movimiento): Long = dao.insertar(movimiento.aEntidad().copy(id = 0))
+    override suspend fun agregar(movimiento: Movimiento): Long = dao.insertar(movimiento.aEntidad().copy(id = 0))
 
-    suspend fun eliminar(id: Long) = dao.eliminar(id)
-}
-
-/** Motivos por los que puede fallar la actualización, con un mensaje para el usuario. */
-sealed class FalloCotizaciones(val mensaje: String) : Exception(mensaje) {
-    class SinConexion : FalloCotizaciones("Sin conexión a internet")
-    class Servidor(val codigo: Int) : FalloCotizaciones("El servidor respondió con error ($codigo)")
-    class DatosInvalidos : FalloCotizaciones("La respuesta del servidor no es válida")
+    override suspend fun eliminar(id: Long) = dao.eliminar(id)
 }
 
 /**
@@ -43,14 +42,15 @@ sealed class FalloCotizaciones(val mensaje: String) : Exception(mensaje) {
  * - `actualizar()` descarga de la API y reemplaza la caché local. Como Room
  *   emite por el Flow, la UI se actualiza sola.
  */
-class CotizacionesRepository(
+class CotizacionesRepositoryImpl @Inject constructor(
     private val api: DolarApi,
     private val dao: CotizacionDao,
-) {
-    val cotizaciones: Flow<List<Cotizacion>> =
+) : CotizacionesRepository {
+
+    override val cotizaciones: Flow<List<Cotizacion>> =
         dao.observarTodas().map { lista -> lista.map { it.aModelo() } }
 
-    suspend fun actualizar(): Result<Unit> {
+    override suspend fun actualizar(): Result<Unit> {
         // No usamos runCatching: atraparía también CancellationException y
         // rompería la cancelación de corrutinas. Atrapamos solo lo esperable.
         return try {

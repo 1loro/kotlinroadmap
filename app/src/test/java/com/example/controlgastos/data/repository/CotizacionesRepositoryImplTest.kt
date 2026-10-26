@@ -1,8 +1,9 @@
-package com.example.controlgastos.data
+package com.example.controlgastos.data.repository
 
 import com.example.controlgastos.data.local.CotizacionDao
 import com.example.controlgastos.data.local.CotizacionEntity
 import com.example.controlgastos.data.remote.crearDolarApi
+import com.example.controlgastos.domain.repository.FalloCotizaciones
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
@@ -21,15 +22,15 @@ import java.time.Instant
  * (MockWebServer) que corre en la propia máquina. Así se prueba también la
  * deserialización del JSON, sin depender de internet.
  */
-class CotizacionesRepositoryTest {
+class CotizacionesRepositoryImplTest {
 
     private val servidor = MockWebServer()
     private val dao = FakeCotizacionDao()
-    private lateinit var repositorio: CotizacionesRepository
+    private lateinit var repositorio: CotizacionesRepositoryImpl
 
     @Before fun iniciar() {
         servidor.start()
-        repositorio = CotizacionesRepository(crearDolarApi(servidor.url("/").toString()), dao)
+        repositorio = CotizacionesRepositoryImpl(crearDolarApi(servidor.url("/").toString()), dao)
     }
 
     @After fun terminar() = servidor.close()

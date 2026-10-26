@@ -4,7 +4,7 @@ import androidx.test.core.app.ApplicationProvider
 import com.example.controlgastos.data.local.CotizacionEntity
 import com.example.controlgastos.data.local.GastosDatabase
 import com.example.controlgastos.data.local.MovimientoEntity
-import com.example.controlgastos.model.Categoria
+import com.example.controlgastos.domain.model.Categoria
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After

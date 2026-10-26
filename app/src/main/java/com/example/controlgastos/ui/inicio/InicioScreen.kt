@@ -1,6 +1,7 @@
 package com.example.controlgastos.ui.inicio
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -15,6 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
@@ -25,38 +27,49 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.controlgastos.data.DatosDeEjemplo
-import com.example.controlgastos.model.Categoria
-import com.example.controlgastos.model.Cotizacion
-import com.example.controlgastos.model.Movimiento
-import com.example.controlgastos.model.Resumen
-import com.example.controlgastos.model.resumen
+import com.example.controlgastos.domain.model.Categoria
+import com.example.controlgastos.domain.model.Resumen
+import com.example.controlgastos.domain.model.resumen
+import com.example.controlgastos.domain.usecase.PanelInicio
 import com.example.controlgastos.ui.componentes.MovimientoItem
 import com.example.controlgastos.ui.componentes.colorMonto
 import com.example.controlgastos.ui.formatearDolares
 import com.example.controlgastos.ui.formatearMonto
 import com.example.controlgastos.ui.theme.ControlGastosTheme
-import java.time.Instant
 
-private const val ULTIMOS = 5
+/**
+ * "Ruta": obtiene el ViewModel (Hilt lo crea con sus dependencias) y conecta
+ * su estado con la pantalla. La pantalla en sí no sabe que existe un
+ * ViewModel: recibe datos y avisa eventos, así se previsualiza y testea fácil.
+ */
+@Composable
+fun InicioRuta(
+    onNuevoMovimiento: () -> Unit,
+    onVerTodos: () -> Unit,
+    onMovimientoClick: (Long) -> Unit,
+    viewModel: InicioViewModel = hiltViewModel(),
+) {
+    val estado by viewModel.uiState.collectAsStateWithLifecycle()
+    InicioScreen(estado, onNuevoMovimiento, onVerTodos, onMovimientoClick)
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InicioScreen(
-    movimientos: List<Movimiento>,
-    // Puede ser null (sin conexión y sin caché): la tarjeta lo omite.
-    dolarOficial: Cotizacion?,
+    estado: InicioUiState,
     onNuevoMovimiento: () -> Unit,
     onVerTodos: () -> Unit,
     onMovimientoClick: (Long) -> Unit,
 ) {
-    val resumen = movimientos.resumen()
-
     Scaffold(
         topBar = { TopAppBar(title = { Text("Control de Gastos") }) },
         floatingActionButton = {
@@ -67,6 +80,14 @@ fun InicioScreen(
             )
         },
     ) { innerPadding ->
+        val panel = (estado as? InicioUiState.Listo)?.panel
+        if (panel == null) {
+            Box(Modifier.fillMaxSize().padding(innerPadding), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+            return@Scaffold
+        }
+        val resumen = panel.resumen
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
@@ -74,7 +95,7 @@ fun InicioScreen(
                 bottom = innerPadding.calculateBottomPadding() + 88.dp, // espacio para el FAB
             ),
         ) {
-            item { TarjetaSaldo(resumen, dolarOficial, Modifier.padding(16.dp)) }
+            item { TarjetaSaldo(resumen, panel.saldoEnDolares, Modifier.padding(16.dp)) }
 
             if (resumen.gastoPorCategoria.isNotEmpty()) {
                 item { TituloSeccion("Gastos por categoría") }
@@ -92,7 +113,7 @@ fun InicioScreen(
                     TextButton(onClick = onVerTodos) { Text("Ver todos") }
                 }
             }
-            items(movimientos.take(ULTIMOS), key = { it.id }) { movimiento ->
+            items(panel.ultimos, key = { it.id }) { movimiento ->
                 MovimientoItem(movimiento, onClick = { onMovimientoClick(movimiento.id) })
             }
         }
@@ -100,7 +121,7 @@ fun InicioScreen(
 }
 
 @Composable
-private fun TarjetaSaldo(resumen: Resumen, dolarOficial: Cotizacion?, modifier: Modifier = Modifier) {
+private fun TarjetaSaldo(resumen: Resumen, saldoEnDolares: Double?, modifier: Modifier = Modifier) {
     Card(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -115,9 +136,10 @@ private fun TarjetaSaldo(resumen: Resumen, dolarOficial: Cotizacion?, modifier: 
                 style = MaterialTheme.typography.displaySmall,
                 fontWeight = FontWeight.Bold,
             )
-            dolarOficial?.venta?.takeIf { it > 0 }?.let { venta ->
+            // null si no hay cotización (sin conexión y sin caché): se omite.
+            saldoEnDolares?.let { dolares ->
                 Text(
-                    "≈ ${formatearDolares(resumen.saldo / venta)} al dólar oficial",
+                    "≈ ${formatearDolares(dolares)} al dólar oficial",
                     style = MaterialTheme.typography.bodyMedium,
                 )
             }
@@ -173,10 +195,8 @@ private fun BarraCategoria(categoria: Categoria, total: Double, totalGastos: Dou
 @Composable
 private fun InicioPreview() {
     ControlGastosTheme {
-        InicioScreen(
-            DatosDeEjemplo.movimientos(),
-            Cotizacion(Cotizacion.OFICIAL, "Oficial", 1510.0, 1560.0, Instant.now()),
-            {}, {}, {},
-        )
+        val movimientos = DatosDeEjemplo.movimientos()
+        val panel = PanelInicio(movimientos.resumen(), movimientos.take(5), saldoEnDolares = 280.26)
+        InicioScreen(InicioUiState.Listo(panel), {}, {}, {})
     }
 }

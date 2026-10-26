@@ -26,44 +26,60 @@ import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.controlgastos.model.Categoria
-import com.example.controlgastos.model.Movimiento
-import com.example.controlgastos.model.TipoMovimiento
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.controlgastos.domain.model.Categoria
+import com.example.controlgastos.domain.model.TipoMovimiento
+import com.example.controlgastos.domain.usecase.ErrorValidacion
 import com.example.controlgastos.ui.theme.ControlGastosTheme
-import java.time.LocalDate
 
-/**
- * Convierte el texto del campo monto ("1500,50" o "1500.50") a número.
- * Devuelve null si no es un monto válido y mayor que cero.
- */
-fun parsearMonto(texto: String): Double? =
-    texto.trim().replace(',', '.').toDoubleOrNull()?.takeIf { it > 0 }
+@Composable
+fun FormularioRuta(onCerrar: () -> Unit, viewModel: FormularioViewModel = hiltViewModel()) {
+    val estado by viewModel.uiState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(estado.guardado) {
+        if (estado.guardado) onCerrar()
+    }
+
+    FormularioScreen(
+        estado = estado,
+        onTipo = viewModel::cambiarTipo,
+        onDescripcion = viewModel::cambiarDescripcion,
+        onMonto = viewModel::cambiarMonto,
+        onCategoria = viewModel::elegirCategoria,
+        onGuardar = viewModel::guardar,
+        onCancelar = onCerrar,
+    )
+}
+
+/** Textos de error para el usuario. La regla vive en el dominio; el texto, en la UI. */
+private val ErrorValidacion.mensaje: String
+    get() = when (this) {
+        ErrorValidacion.DESCRIPCION_VACIA -> "Escribe una descripción"
+        ErrorValidacion.MONTO_INVALIDO -> "Ingresa un monto mayor que 0"
+        ErrorValidacion.SIN_CATEGORIA -> "Elige una categoría"
+    }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun FormularioScreen(
-    onGuardar: (Movimiento) -> Unit,
+    estado: FormularioUiState,
+    onTipo: (TipoMovimiento) -> Unit,
+    onDescripcion: (String) -> Unit,
+    onMonto: (String) -> Unit,
+    onCategoria: (Categoria) -> Unit,
+    onGuardar: () -> Unit,
     onCancelar: () -> Unit,
 ) {
-    // Estado del formulario. rememberSaveable conserva lo escrito al rotar.
-    var tipo by rememberSaveable { mutableStateOf(TipoMovimiento.GASTO) }
-    var descripcion by rememberSaveable { mutableStateOf("") }
-    var montoTexto by rememberSaveable { mutableStateOf("") }
-    var categoria by rememberSaveable { mutableStateOf<Categoria?>(null) }
-    var intentoGuardar by rememberSaveable { mutableStateOf(false) }
-
-    // Valores derivados: se recalculan en cada recomposición.
-    val monto = parsearMonto(montoTexto)
-    val descripcionValida = descripcion.isNotBlank()
+    // Helper local: el mensaje de un error si está presente, o null.
+    fun error(tipo: ErrorValidacion): String? = tipo.takeIf { it in estado.errores }?.mensaje
 
     Scaffold(
         topBar = {
@@ -87,12 +103,8 @@ fun FormularioScreen(
             SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
                 TipoMovimiento.entries.forEachIndexed { indice, opcion ->
                     SegmentedButton(
-                        selected = tipo == opcion,
-                        onClick = {
-                            tipo = opcion
-                            // La categoría elegida puede no corresponder al nuevo tipo.
-                            if (categoria?.tipo != opcion) categoria = null
-                        },
+                        selected = estado.tipo == opcion,
+                        onClick = { onTipo(opcion) },
                         shape = SegmentedButtonDefaults.itemShape(indice, TipoMovimiento.entries.size),
                     ) {
                         Text(if (opcion == TipoMovimiento.GASTO) "Gasto" else "Ingreso")
@@ -100,78 +112,48 @@ fun FormularioScreen(
                 }
             }
 
+            val errorDescripcion = error(ErrorValidacion.DESCRIPCION_VACIA)
             OutlinedTextField(
-                value = descripcion,
-                onValueChange = { descripcion = it },
+                value = estado.descripcion,
+                onValueChange = onDescripcion,
                 label = { Text("Descripción") },
                 singleLine = true,
-                isError = intentoGuardar && !descripcionValida,
-                supportingText = if (intentoGuardar && !descripcionValida) {
-                    { Text("Escribe una descripción") }
-                } else {
-                    null
-                },
+                isError = errorDescripcion != null,
+                supportingText = errorDescripcion?.let { { Text(it) } },
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                 modifier = Modifier.fillMaxWidth(),
             )
 
+            val errorMonto = error(ErrorValidacion.MONTO_INVALIDO)
             OutlinedTextField(
-                value = montoTexto,
-                onValueChange = { nuevo ->
-                    // Solo dígitos y un separador decimal.
-                    if (nuevo.count { it == ',' || it == '.' } <= 1 && nuevo.all { it.isDigit() || it == ',' || it == '.' }) {
-                        montoTexto = nuevo
-                    }
-                },
+                value = estado.montoTexto,
+                onValueChange = onMonto,
                 label = { Text("Monto") },
                 prefix = { Text("$ ") },
                 singleLine = true,
-                isError = intentoGuardar && monto == null,
-                supportingText = if (intentoGuardar && monto == null) {
-                    { Text("Ingresa un monto mayor que 0") }
-                } else {
-                    null
-                },
+                isError = errorMonto != null,
+                supportingText = errorMonto?.let { { Text(it) } },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Done),
                 modifier = Modifier.fillMaxWidth(),
             )
 
             Text("Categoría", style = MaterialTheme.typography.titleSmall)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Categoria.de(tipo).forEach { opcion ->
+                estado.categoriasDisponibles.forEach { opcion ->
                     FilterChip(
-                        selected = categoria == opcion,
-                        onClick = { categoria = opcion },
+                        selected = estado.categoria == opcion,
+                        onClick = { onCategoria(opcion) },
                         label = { Text("${opcion.emoji} ${opcion.etiqueta}") },
                     )
                 }
             }
-            if (intentoGuardar && categoria == null) {
-                Text(
-                    "Elige una categoría",
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall,
-                )
+            error(ErrorValidacion.SIN_CATEGORIA)?.let {
+                Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
             }
 
             Button(
-                onClick = {
-                    intentoGuardar = true
-                    // Copia local: `categoria` es una propiedad delegada (by) y el
-                    // compilador no puede hacer smart cast sobre ella; sobre un val sí.
-                    val categoriaElegida = categoria
-                    if (descripcionValida && monto != null && categoriaElegida != null) {
-                        onGuardar(
-                            Movimiento(
-                                id = 0, // el estado asigna el id real
-                                descripcion = descripcion.trim(),
-                                monto = monto,
-                                categoria = categoriaElegida,
-                                fecha = LocalDate.now(),
-                            ),
-                        )
-                    }
-                },
+                onClick = onGuardar,
+                enabled = !estado.guardando,
                 modifier = Modifier.fillMaxWidth().height(56.dp),
             ) {
                 Text("Guardar")
@@ -182,6 +164,14 @@ fun FormularioScreen(
 
 @Preview(showBackground = true)
 @Composable
-private fun FormularioPreview() {
-    ControlGastosTheme { FormularioScreen({}, {}) }
+private fun FormularioConErroresPreview() {
+    ControlGastosTheme {
+        FormularioScreen(
+            estado = FormularioUiState(
+                descripcion = "Cine",
+                errores = setOf(ErrorValidacion.MONTO_INVALIDO, ErrorValidacion.SIN_CATEGORIA),
+            ),
+            onTipo = {}, onDescripcion = {}, onMonto = {}, onCategoria = {}, onGuardar = {}, onCancelar = {},
+        )
+    }
 }

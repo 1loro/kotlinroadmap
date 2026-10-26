@@ -1,4 +1,4 @@
-package com.example.controlgastos.model
+package com.example.controlgastos.domain.model
 
 import java.time.Instant
 

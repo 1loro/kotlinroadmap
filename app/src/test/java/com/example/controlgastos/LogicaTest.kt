@@ -1,13 +1,13 @@
 package com.example.controlgastos
 
-import com.example.controlgastos.model.Categoria
-import com.example.controlgastos.model.Cotizacion
-import com.example.controlgastos.model.Movimiento
-import com.example.controlgastos.model.resumen
+import com.example.controlgastos.domain.model.Categoria
+import com.example.controlgastos.domain.model.Cotizacion
+import com.example.controlgastos.domain.model.Movimiento
+import com.example.controlgastos.domain.model.resumen
 import com.example.controlgastos.ui.cotizaciones.CotizacionesUiState
 import com.example.controlgastos.ui.cotizaciones.Refresco
 import com.example.controlgastos.ui.cotizaciones.calcularEstado
-import com.example.controlgastos.ui.formulario.parsearMonto
+import com.example.controlgastos.domain.usecase.parsearMonto
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
