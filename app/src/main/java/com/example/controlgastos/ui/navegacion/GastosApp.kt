@@ -45,13 +45,17 @@ private val pestanias = listOf(
  * pila, y sobrevive a la rotación).
  */
 @Composable
-fun GastosApp(navController: NavHostController = rememberNavController()) {
+fun GastosApp(
+    modifier: Modifier = Modifier,
+    navController: NavHostController = rememberNavController(),
+) {
     val entradaActual by navController.currentBackStackEntryAsState()
     val destinoActual = entradaActual?.destination
     // La barra inferior solo se muestra en las pantallas principales.
     val mostrarBarra = pestanias.any { destinoActual?.hasRoute(it.ruta::class) == true }
 
     Scaffold(
+        modifier = modifier,
         // Cada pantalla maneja sus propios márgenes del sistema con su Scaffold.
         contentWindowInsets = WindowInsets(0),
         bottomBar = {

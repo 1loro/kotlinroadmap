@@ -39,6 +39,7 @@ class NavegacionTest {
     @get:Rule val reglas: RuleChain = RuleChain.outerRule(hilt).around(compose)
 
     @Inject lateinit var api: FakeDolarApi
+    @Inject lateinit var autenticador: FakeAutenticador
 
     private var escenario: ActivityScenario<MainActivity>? = null
 
@@ -116,6 +117,22 @@ class NavegacionTest {
 
         compose.esperarTexto("Sin conexión a internet")
         compose.onNodeWithText("Reintentar").assertIsDisplayed()
+    }
+
+    @Test fun laAppArrancaBloqueadaYSeDesbloqueaAlAutenticarse() {
+        autenticador.error = "Huella no reconocida"
+        abrirApp()
+
+        compose.esperarTexto("Control de Gastos está bloqueado")
+        compose.onNodeWithText("Huella no reconocida").assertIsDisplayed()
+        // Bloqueada: los datos de la app no son accesibles (ni para TalkBack).
+        compose.onNodeWithText("Saldo disponible").assertDoesNotExist()
+
+        autenticador.error = null
+        compose.onNodeWithText("Desbloquear").performClick()
+
+        compose.esperarTexto("Saldo disponible")
+        compose.onNodeWithText("Control de Gastos está bloqueado").assertDoesNotExist()
     }
 
     private fun ComposeTestRule.esperarTexto(texto: String) =
