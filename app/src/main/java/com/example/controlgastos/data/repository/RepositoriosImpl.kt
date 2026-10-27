@@ -1,15 +1,15 @@
 package com.example.controlgastos.data.repository
 
-import com.example.controlgastos.data.local.CotizacionDao
+import com.example.controlgastos.data.local.IndicadorDao
 import com.example.controlgastos.data.local.MovimientoDao
 import com.example.controlgastos.data.local.aEntidad
 import com.example.controlgastos.data.local.aModelo
-import com.example.controlgastos.data.remote.DolarApi
+import com.example.controlgastos.data.remote.IndicadoresApi
 import com.example.controlgastos.data.remote.aEntidad
-import com.example.controlgastos.domain.model.Cotizacion
+import com.example.controlgastos.domain.model.Indicador
 import com.example.controlgastos.domain.model.Movimiento
-import com.example.controlgastos.domain.repository.CotizacionesRepository
-import com.example.controlgastos.domain.repository.FalloCotizaciones
+import com.example.controlgastos.domain.repository.FalloIndicadores
+import com.example.controlgastos.domain.repository.IndicadoresRepository
 import com.example.controlgastos.domain.repository.MovimientosRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -38,33 +38,36 @@ class MovimientosRepositoryImpl @Inject constructor(
 
 /**
  * Estrategia "offline-first":
- * - La UI SIEMPRE lee de Room (`cotizaciones`), así funciona sin conexión.
+ * - La UI SIEMPRE lee de Room (`indicadores`), así funciona sin conexión.
  * - `actualizar()` descarga de la API y reemplaza la caché local. Como Room
  *   emite por el Flow, la UI se actualiza sola.
  */
-class CotizacionesRepositoryImpl @Inject constructor(
-    private val api: DolarApi,
-    private val dao: CotizacionDao,
-) : CotizacionesRepository {
+class IndicadoresRepositoryImpl @Inject constructor(
+    private val api: IndicadoresApi,
+    private val dao: IndicadorDao,
+) : IndicadoresRepository {
 
-    override val cotizaciones: Flow<List<Cotizacion>> =
+    override val indicadores: Flow<List<Indicador>> =
         dao.observarTodas().map { lista -> lista.map { it.aModelo() } }
 
     override suspend fun actualizar(): Result<Unit> {
         // No usamos runCatching: atraparía también CancellationException y
         // rompería la cancelación de corrutinas. Atrapamos solo lo esperable.
         return try {
-            val entidades = api.obtenerDolares().mapIndexed { i, dto -> dto.aEntidad(orden = i) }
-            dao.reemplazarTodas(entidades)
+            val dtos = api.obtenerIndicadores()
+            // Una respuesta sin ningún indicador conocido significa que la API
+            // cambió: no se borra la caché con una lista vacía.
+            if (dtos.isEmpty()) return Result.failure(FalloIndicadores.DatosInvalidos())
+            dao.reemplazarTodas(dtos.mapIndexed { i, dto -> dto.aEntidad(orden = i) })
             Result.success(Unit)
         } catch (e: IOException) {
-            Result.failure(FalloCotizaciones.SinConexion())
+            Result.failure(FalloIndicadores.SinConexion())
         } catch (e: HttpException) {
-            Result.failure(FalloCotizaciones.Servidor(e.code()))
+            Result.failure(FalloIndicadores.Servidor(e.code()))
         } catch (e: SerializationException) {
-            Result.failure(FalloCotizaciones.DatosInvalidos())
+            Result.failure(FalloIndicadores.DatosInvalidos())
         } catch (e: DateTimeParseException) {
-            Result.failure(FalloCotizaciones.DatosInvalidos())
+            Result.failure(FalloIndicadores.DatosInvalidos())
         }
     }
 }

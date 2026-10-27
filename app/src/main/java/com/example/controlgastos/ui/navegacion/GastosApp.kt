@@ -24,7 +24,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.controlgastos.R
-import com.example.controlgastos.ui.cotizaciones.CotizacionesRuta
+import com.example.controlgastos.ui.indicadores.IndicadoresRuta
 import com.example.controlgastos.ui.detalle.DetalleRuta
 import com.example.controlgastos.ui.formulario.FormularioRuta
 import com.example.controlgastos.ui.inicio.InicioRuta
@@ -35,7 +35,7 @@ private data class Pestania(val etiqueta: String, val ruta: Any, val icono: @Com
 private val pestanias = listOf(
     Pestania("Inicio", Inicio) { Icon(Icons.Default.Home, contentDescription = null) },
     Pestania("Movimientos", Movimientos) { Icon(Icons.AutoMirrored.Filled.List, contentDescription = null) },
-    Pestania("Dólar", Cotizaciones) { Icon(painterResource(R.drawable.ic_dolar), contentDescription = null) },
+    Pestania("Indicadores", Indicadores) { Icon(painterResource(R.drawable.ic_dolar), contentDescription = null) },
 )
 
 /**
@@ -91,8 +91,8 @@ fun GastosApp(
                     onMovimientoClick = { id -> navController.navigate(Detalle(id)) },
                 )
             }
-            composable<Cotizaciones> {
-                CotizacionesRuta()
+            composable<Indicadores> {
+                IndicadoresRuta()
             }
             // El id de Detalle(id) llega al DetalleViewModel por su SavedStateHandle.
             composable<Detalle> {

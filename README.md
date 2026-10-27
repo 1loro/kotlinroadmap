@@ -2,19 +2,19 @@
 
 [![CI](https://github.com/1loro/kotlinroadmap/actions/workflows/ci.yml/badge.svg)](https://github.com/1loro/kotlinroadmap/actions/workflows/ci.yml)
 
-App Android nativa para registrar ingresos y gastos y consultar la cotización del dólar en Argentina, con prácticas de seguridad de una app bancaria. Es el **proyecto integrador** de un roadmap de formación en desarrollo Android con Kotlin: la misma app crece fase a fase y cada fase suma una capa (UI → datos → arquitectura → seguridad).
+App Android nativa para registrar ingresos y gastos en pesos chilenos y consultar los indicadores económicos de Chile (dólar observado, euro, UF, UTM), con prácticas de seguridad de una app bancaria. Es el **proyecto integrador** de un roadmap de formación en desarrollo Android con Kotlin: la misma app crece fase a fase y cada fase suma una capa (UI → datos → arquitectura → seguridad).
 
-| Inicio | Movimientos | Dólar (sin conexión) |
+| Inicio | Movimientos | Indicadores (sin conexión) |
 |---|---|---|
-| Saldo, gasto por categoría y equivalente en USD | Lista con filtros por tipo | Cotizaciones guardadas con aviso |
+| Saldo, gasto por categoría y equivalente en USD | Lista con filtros por tipo | Valores guardados con aviso |
 
 ## Funcionalidades
 
-- Registrar ingresos y gastos con categoría, con validación del formulario.
+- Registrar ingresos y gastos en pesos chilenos (sin decimales; "15.000" = quince mil), con validación del formulario.
 - Ver el saldo, el total de ingresos y gastos, y el gasto por categoría.
 - Filtrar movimientos, ver el detalle y eliminarlos con confirmación.
-- Cotizaciones del dólar (oficial, blue, MEP, CCL…) desde [DolarApi](https://dolarapi.com), con caché local: funciona sin conexión.
-- Saldo convertido a dólares al tipo de cambio oficial.
+- Indicadores del Banco Central de Chile (dólar observado, euro, UF y UTM) desde [mindicador.cl](https://mindicador.cl), con caché local: funciona sin conexión.
+- Saldo convertido a dólares al dólar observado.
 - Bloqueo con huella o PIN del dispositivo.
 - Modo claro y oscuro (Material 3).
 
@@ -91,14 +91,14 @@ Desde la terminal:
 ./gradlew :fase0-kotlin:run              # demo de los ejercicios de la Fase 0
 ```
 
-Configuración opcional: `-PdolarApiUrl=https://...` (o la variable de entorno `DOLAR_API_URL`) cambia el servidor de cotizaciones.
+Configuración opcional: `-PindicadoresApiUrl=https://...` (o la variable de entorno `INDICADORES_API_URL`) cambia el servidor de indicadores.
 
 ## Tests
 
 | Tipo | Qué cubre |
 |---|---|
 | Unitarios (JVM) | Casos de uso, los 6 ViewModels, repositorio contra un servidor HTTP falso, lógica de resumen, ejercicios de la Fase 0 |
-| Instrumentados | Room con SQLite real, Keystore y BD cifrada, y flujos completos de UI con Hilt (agregar, filtrar, cotizaciones, sin conexión, bloqueo) |
+| Instrumentados | Room con SQLite real, migración de la BD, Keystore y BD cifrada, y flujos completos de UI con Hilt (agregar, filtrar, indicadores, sin conexión, bloqueo) |
 
 ## Licencia
 

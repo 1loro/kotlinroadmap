@@ -12,8 +12,10 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.printToLog
 import androidx.test.core.app.ActivityScenario
-import com.example.controlgastos.data.remote.CotizacionDto
+import com.example.controlgastos.data.remote.IndicadorDto
 import com.example.controlgastos.ui.formatearDolares
+import com.example.controlgastos.ui.formatearMonto
+import com.example.controlgastos.ui.formatearValorIndicador
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import org.junit.After
@@ -25,20 +27,20 @@ import java.io.IOException
 import javax.inject.Inject
 
 // Prueba de UI de la app COMPLETA (MainActivity + Hilt + ViewModels + Room
-// en memoria), con la red reemplazada por FakeDolarApi.
+// en memoria), con la red reemplazada por FakeIndicadoresApi.
 // ./gradlew :app:connectedDebugAndroidTest
 @HiltAndroidTest
 class NavegacionTest {
 
     private val hilt = HiltAndroidRule(this)
     // "Empty": la regla no lanza ninguna Activity; cada test la lanza cuando
-    // ya configuró la API falsa (si no, la app pediría cotizaciones antes).
+    // ya configuró la API falsa (si no, la app pediría indicadores antes).
     private val compose = createEmptyComposeRule()
 
     // Hilt primero (crea el grafo de dependencias), luego Compose.
     @get:Rule val reglas: RuleChain = RuleChain.outerRule(hilt).around(compose)
 
-    @Inject lateinit var api: FakeDolarApi
+    @Inject lateinit var api: FakeIndicadoresApi
     @Inject lateinit var autenticador: FakeAutenticador
 
     private var escenario: ActivityScenario<MainActivity>? = null
@@ -55,18 +57,20 @@ class NavegacionTest {
 
     @Test fun agregarVerYEliminarUnGasto() {
         abrirApp()
-        compose.esperarTexto("Verdulería")
+        compose.esperarTexto("Feria")
 
         compose.onNodeWithContentDescription("Nuevo movimiento").performClick()
         compose.onNodeWithText("Guardar").performClick()
         compose.esperarTexto("Escribe una descripción")
 
         compose.onNodeWithText("Descripción").performTextInput("Café de prueba")
-        compose.onNodeWithText("Monto").performTextInput("1234,5")
+        compose.onNodeWithText("Monto").performTextInput("1.234")
         compose.onNodeWithText("🎬 Ocio").performClick()
         compose.onNodeWithText("Guardar").performClick()
 
         compose.esperarTexto("Café de prueba")
+        // Pesos chilenos: sin decimales y con punto de miles.
+        compose.onNodeWithText("-${formatearMonto(1234.0)}").assertIsDisplayed()
         compose.onNodeWithText("Café de prueba").performClick()
 
         compose.esperarTexto("Detalle")
@@ -80,40 +84,40 @@ class NavegacionTest {
     @Test fun filtrarMovimientosPorTipo() {
         abrirApp()
         compose.onNodeWithText("Movimientos").performClick()
-        compose.esperarTexto("Alquiler")
+        compose.esperarTexto("Arriendo")
 
         compose.onNodeWithText("Ingresos").performClick()
-        compose.esperarHasta("que se oculte Alquiler") { !hayTexto("Alquiler") }
-        compose.onNodeWithText("Sueldo de octubre").assertIsDisplayed()
+        compose.esperarHasta("que se oculte el arriendo") { !hayTexto("Arriendo") }
+        compose.onNodeWithText("Sueldo").assertIsDisplayed()
 
         compose.onNodeWithText("Gastos").performClick()
-        compose.esperarHasta("que se oculte el sueldo") { !hayTexto("Sueldo de octubre") }
-        compose.onNodeWithText("Alquiler").assertIsDisplayed()
+        compose.esperarHasta("que se oculte el sueldo") { !hayTexto("Sueldo") }
+        compose.onNodeWithText("Arriendo").assertIsDisplayed()
     }
 
-    @Test fun cotizacionesSeMuestranYConvierteElSaldo() {
+    @Test fun indicadoresSeMuestranYConviertenElSaldo() {
         api.respuesta = {
             listOf(
-                CotizacionDto("oficial", "Oficial", 1000.0, 1000.0, "2026-10-26T16:00:00.000Z"),
-                CotizacionDto("blue", "Blue", 1500.0, 1550.0, "2026-10-26T19:00:00.000Z"),
+                IndicadorDto("dolar", "Dólar observado", "Pesos", "2026-10-26T03:00:00.000Z", 1000.0),
+                IndicadorDto("uf", "Unidad de fomento (UF)", "Pesos", "2026-10-26T03:00:00.000Z", 41221.08),
             )
         }
         abrirApp()
 
-        // El Inicio pide cotizaciones al abrir: saldo $ 437.200 / 1000 = US$ 437,20.
-        // Se usa el mismo formateador que la app: NumberFormat separa "US$" del
-        // número con un espacio no separable (U+00A0).
-        compose.esperarTexto("≈ ${formatearDolares(437.2)} al dólar oficial")
+        // El Inicio pide indicadores al abrir: saldo $744.800 / 1000 = US$744,80.
+        // Se usa el mismo formateador que la app (NumberFormat puede usar un
+        // espacio no separable U+00A0 entre el símbolo y el número).
+        compose.esperarTexto("≈ ${formatearDolares(744.8)} al dólar observado")
 
-        compose.onNodeWithText("Dólar").performClick()
-        compose.esperarTexto("Blue")
-        compose.onNodeWithText("Oficial").assertIsDisplayed()
+        compose.onNodeWithText("Indicadores").performClick()
+        compose.esperarTexto("Unidad de fomento (UF)")
+        compose.onNodeWithText(formatearValorIndicador(41221.08)).assertIsDisplayed()
     }
 
     @Test fun sinConexionYSinCacheMuestraErrorConReintentar() {
         api.respuesta = { throw IOException("sin red") }
         abrirApp()
-        compose.onNodeWithText("Dólar").performClick()
+        compose.onNodeWithText("Indicadores").performClick()
 
         compose.esperarTexto("Sin conexión a internet")
         compose.onNodeWithText("Reintentar").assertIsDisplayed()

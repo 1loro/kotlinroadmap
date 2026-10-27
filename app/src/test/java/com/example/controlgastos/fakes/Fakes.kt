@@ -1,8 +1,8 @@
 package com.example.controlgastos.fakes
 
-import com.example.controlgastos.domain.model.Cotizacion
+import com.example.controlgastos.domain.model.Indicador
 import com.example.controlgastos.domain.model.Movimiento
-import com.example.controlgastos.domain.repository.CotizacionesRepository
+import com.example.controlgastos.domain.repository.IndicadoresRepository
 import com.example.controlgastos.domain.repository.MovimientosRepository
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
@@ -34,13 +34,13 @@ class FakeMovimientosRepository(iniciales: List<Movimiento> = emptyList()) : Mov
     }
 }
 
-class FakeCotizacionesRepository(
-    iniciales: List<Cotizacion> = emptyList(),
+class FakeIndicadoresRepository(
+    iniciales: List<Indicador> = emptyList(),
     /** Lo que devolverá la próxima llamada a actualizar(). */
     var resultado: Result<Unit> = Result.success(Unit),
-    /** Cotizaciones que "llegan de la red" si la actualización tiene éxito. */
-    var desdeLaRed: List<Cotizacion> = iniciales,
-) : CotizacionesRepository {
+    /** Indicadores que "llegan de la red" si la actualización tiene éxito. */
+    var desdeLaRed: List<Indicador> = iniciales,
+) : IndicadoresRepository {
     /** Si no es null, actualizar() espera a que se complete: simula una red lenta. */
     var pausa: CompletableDeferred<Unit>? = null
 
@@ -48,7 +48,7 @@ class FakeCotizacionesRepository(
     var llamadasActualizar = 0
         private set
 
-    override val cotizaciones: Flow<List<Cotizacion>> = cache
+    override val indicadores: Flow<List<Indicador>> = cache
 
     override suspend fun actualizar(): Result<Unit> {
         llamadasActualizar++

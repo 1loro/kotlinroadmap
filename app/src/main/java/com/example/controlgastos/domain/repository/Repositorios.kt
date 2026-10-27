@@ -1,6 +1,6 @@
 package com.example.controlgastos.domain.repository
 
-import com.example.controlgastos.domain.model.Cotizacion
+import com.example.controlgastos.domain.model.Indicador
 import com.example.controlgastos.domain.model.Movimiento
 import kotlinx.coroutines.flow.Flow
 
@@ -22,17 +22,17 @@ interface MovimientosRepository {
     suspend fun eliminar(id: Long)
 }
 
-interface CotizacionesRepository {
-    /** Últimas cotizaciones guardadas localmente (funciona sin conexión). */
-    val cotizaciones: Flow<List<Cotizacion>>
+interface IndicadoresRepository {
+    /** Últimos indicadores guardados localmente (funciona sin conexión). */
+    val indicadores: Flow<List<Indicador>>
 
-    /** Descarga cotizaciones nuevas. En caso de error, la falla es un [FalloCotizaciones]. */
+    /** Descarga indicadores nuevos. En caso de error, la falla es un [FalloIndicadores]. */
     suspend fun actualizar(): Result<Unit>
 }
 
 /** Motivos por los que puede fallar la actualización, con un mensaje para el usuario. */
-sealed class FalloCotizaciones(val mensaje: String) : Exception(mensaje) {
-    class SinConexion : FalloCotizaciones("Sin conexión a internet")
-    class Servidor(val codigo: Int) : FalloCotizaciones("El servidor respondió con error ($codigo)")
-    class DatosInvalidos : FalloCotizaciones("La respuesta del servidor no es válida")
+sealed class FalloIndicadores(val mensaje: String) : Exception(mensaje) {
+    class SinConexion : FalloIndicadores("Sin conexión a internet")
+    class Servidor(val codigo: Int) : FalloIndicadores("El servidor respondió con error ($codigo)")
+    class DatosInvalidos : FalloIndicadores("La respuesta del servidor no es válida")
 }

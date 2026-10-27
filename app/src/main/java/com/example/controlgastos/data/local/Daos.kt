@@ -30,21 +30,21 @@ interface MovimientoDao {
 }
 
 @Dao
-interface CotizacionDao {
-    @Query("SELECT * FROM cotizaciones ORDER BY orden")
-    fun observarTodas(): Flow<List<CotizacionEntity>>
+interface IndicadorDao {
+    @Query("SELECT * FROM indicadores ORDER BY orden")
+    fun observarTodas(): Flow<List<IndicadorEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertarTodas(cotizaciones: List<CotizacionEntity>)
+    suspend fun insertarTodas(indicadores: List<IndicadorEntity>)
 
-    @Query("DELETE FROM cotizaciones")
+    @Query("DELETE FROM indicadores")
     suspend fun borrarTodas()
 
     // @Transaction: o se ejecutan ambas operaciones, o ninguna. La UI nunca
     // ve la tabla vacía a mitad del reemplazo.
     @Transaction
-    suspend fun reemplazarTodas(cotizaciones: List<CotizacionEntity>) {
+    suspend fun reemplazarTodas(indicadores: List<IndicadorEntity>) {
         borrarTodas()
-        insertarTodas(cotizaciones)
+        insertarTodas(indicadores)
     }
 }

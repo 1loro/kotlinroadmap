@@ -77,13 +77,13 @@ Fijar el certificado del servidor impide un MITM aunque la autoridad certificant
 </domain-config>
 ```
 
-No se aplicó a `dolarapi.com` porque es un servidor de terceros: si cambia su certificado sin aviso, la app dejaría de funcionar.
+No se aplicó a `mindicador.cl` porque es un servidor de terceros: si cambia su certificado sin aviso, la app dejaría de funcionar.
 
 ## 3. Configuración por entorno y BuildConfig
 
 | Qué | Cómo |
 |---|---|
-| URL de la API | `BuildConfig.DOLAR_API_URL`. Se cambia sin tocar código: `./gradlew assembleDebug -PdolarApiUrl=https://staging...` o la variable de entorno `DOLAR_API_URL` |
+| URL de la API | `BuildConfig.INDICADORES_API_URL`. Se cambia sin tocar código: `./gradlew assembleDebug -PindicadoresApiUrl=https://staging...` o la variable de entorno `INDICADORES_API_URL` |
 | Comportamiento por tipo de build | `BuildConfig.BLOQUEAR_CAPTURAS`: `false` en debug, `true` en release |
 | Debug y release en el mismo teléfono | `applicationIdSuffix = ".debug"`; la debug se llama "Gastos (debug)" (`src/debug/res`) |
 | Red en debug | `debug-overrides` acepta certificados de usuario para usar un proxy de inspección |

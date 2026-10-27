@@ -3,18 +3,18 @@ package com.example.controlgastos.ui
 import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
 import com.example.controlgastos.domain.model.Categoria
-import com.example.controlgastos.domain.model.Cotizacion
+import com.example.controlgastos.domain.model.Indicador
 import com.example.controlgastos.domain.model.Movimiento
 import com.example.controlgastos.domain.model.TipoMovimiento
-import com.example.controlgastos.domain.repository.FalloCotizaciones
+import com.example.controlgastos.domain.repository.FalloIndicadores
 import com.example.controlgastos.domain.usecase.AgregarMovimientoUseCase
 import com.example.controlgastos.domain.usecase.ErrorValidacion
 import com.example.controlgastos.domain.usecase.ObtenerPanelInicioUseCase
-import com.example.controlgastos.fakes.FakeCotizacionesRepository
+import com.example.controlgastos.fakes.FakeIndicadoresRepository
 import com.example.controlgastos.fakes.FakeMovimientosRepository
 import com.example.controlgastos.fakes.MainDispatcherRule
-import com.example.controlgastos.ui.cotizaciones.CotizacionesUiState
-import com.example.controlgastos.ui.cotizaciones.CotizacionesViewModel
+import com.example.controlgastos.ui.indicadores.IndicadoresUiState
+import com.example.controlgastos.ui.indicadores.IndicadoresViewModel
 import com.example.controlgastos.ui.detalle.DetalleUiState
 import com.example.controlgastos.ui.detalle.DetalleViewModel
 import com.example.controlgastos.ui.formulario.FormularioViewModel
@@ -43,7 +43,7 @@ private val HOY = LocalDate.of(2026, 10, 26)
 
 private val EJEMPLO = listOf(
     Movimiento(1, "Sueldo", 1000.0, Categoria.SUELDO, HOY.minusDays(1)),
-    Movimiento(2, "Alquiler", 400.0, Categoria.VIVIENDA, HOY),
+    Movimiento(2, "Arriendo", 400.0, Categoria.VIVIENDA, HOY),
 )
 
 /**
@@ -57,20 +57,20 @@ private fun TestScope.observar(estado: StateFlow<*>) {
 class InicioViewModelTest {
     @get:Rule val mainDispatcher = MainDispatcherRule()
 
-    @Test fun `muestra el panel y pide cotizaciones al iniciar`() = runTest {
-        val cotizaciones = FakeCotizacionesRepository(listOf(Cotizacion("oficial", "Oficial", 1.0, 200.0, Instant.EPOCH)))
-        val vm = InicioViewModel(ObtenerPanelInicioUseCase(FakeMovimientosRepository(EJEMPLO), cotizaciones), cotizaciones)
+    @Test fun `muestra el panel y pide indicadores al iniciar`() = runTest {
+        val indicadores = FakeIndicadoresRepository(listOf(Indicador("dolar", "Dólar observado", 200.0, Instant.EPOCH)))
+        val vm = InicioViewModel(ObtenerPanelInicioUseCase(FakeMovimientosRepository(EJEMPLO), indicadores), indicadores)
         observar(vm.uiState)
 
         val panel = (vm.uiState.value as InicioUiState.Listo).panel
         assertEquals(600.0, panel.resumen.saldo, 0.0)
         assertEquals(3.0, panel.saldoEnDolares!!, 0.0)
-        assertEquals(1, cotizaciones.llamadasActualizar)
+        assertEquals(1, indicadores.llamadasActualizar)
     }
 
     @Test fun `si falla la red igual muestra el panel, sin saldo en dolares`() = runTest {
-        val cotizaciones = FakeCotizacionesRepository(resultado = Result.failure(FalloCotizaciones.SinConexion()))
-        val vm = InicioViewModel(ObtenerPanelInicioUseCase(FakeMovimientosRepository(EJEMPLO), cotizaciones), cotizaciones)
+        val indicadores = FakeIndicadoresRepository(resultado = Result.failure(FalloIndicadores.SinConexion()))
+        val vm = InicioViewModel(ObtenerPanelInicioUseCase(FakeMovimientosRepository(EJEMPLO), indicadores), indicadores)
         observar(vm.uiState)
 
         val panel = (vm.uiState.value as InicioUiState.Listo).panel
@@ -85,7 +85,7 @@ class MovimientosViewModelTest {
         val handle = SavedStateHandle()
         val vm = MovimientosViewModel(FakeMovimientosRepository(EJEMPLO), handle)
         observar(vm.uiState)
-        assertEquals(listOf("Alquiler", "Sueldo"), vm.uiState.value.movimientos.map { it.descripcion })
+        assertEquals(listOf("Arriendo", "Sueldo"), vm.uiState.value.movimientos.map { it.descripcion })
 
         vm.elegirFiltro(Filtro.INGRESOS)
 
@@ -99,7 +99,7 @@ class MovimientosViewModelTest {
         observar(vm.uiState)
 
         assertEquals(Filtro.GASTOS, vm.uiState.value.filtro)
-        assertEquals(listOf("Alquiler"), vm.uiState.value.movimientos.map { it.descripcion })
+        assertEquals(listOf("Arriendo"), vm.uiState.value.movimientos.map { it.descripcion })
     }
 }
 
@@ -146,16 +146,16 @@ class FormularioViewModelTest {
         vm.guardar()
         assertEquals(setOf(ErrorValidacion.MONTO_INVALIDO, ErrorValidacion.SIN_CATEGORIA), vm.uiState.value.errores)
 
-        vm.cambiarMonto("1500")
+        vm.cambiarMonto("1.500")
         assertEquals(setOf(ErrorValidacion.SIN_CATEGORIA), vm.uiState.value.errores)
         assertFalse(vm.uiState.value.guardado)
     }
 
-    @Test fun `el monto solo acepta numeros y un separador`() {
-        vm.cambiarMonto("12,5")
-        vm.cambiarMonto("12,5a")
-        vm.cambiarMonto("12,5,3")
-        assertEquals("12,5", vm.uiState.value.montoTexto)
+    @Test fun `el monto solo acepta digitos y puntos de miles`() {
+        vm.cambiarMonto("12.500")
+        vm.cambiarMonto("12.500a")
+        vm.cambiarMonto("12.500,5")
+        assertEquals("12.500", vm.uiState.value.montoTexto)
     }
 
     @Test fun `cambiar el tipo descarta una categoria que ya no corresponde`() {
@@ -167,49 +167,49 @@ class FormularioViewModelTest {
 
     @Test fun `guardar datos validos persiste con la fecha del reloj y marca guardado`() {
         vm.cambiarDescripcion("Cine")
-        vm.cambiarMonto("1500,5")
+        vm.cambiarMonto("9.800")
         vm.elegirCategoria(Categoria.OCIO)
 
         vm.guardar()
 
         assertTrue(vm.uiState.value.guardado)
         val guardado = repo.guardados.single()
-        assertEquals(1500.5, guardado.monto, 0.0)
+        assertEquals(9800.0, guardado.monto, 0.0)
         assertEquals(HOY, guardado.fecha)
     }
 }
 
-class CotizacionesViewModelTest {
+class IndicadoresViewModelTest {
     @get:Rule val mainDispatcher = MainDispatcherRule()
 
-    private val oficial = Cotizacion("oficial", "Oficial", 1510.0, 1560.0, Instant.EPOCH)
+    private val dolar = Indicador("dolar", "Dólar observado", 990.35, Instant.EPOCH)
 
     // Turbine: `test { }` recolecta el Flow y permite verificar la SECUENCIA
     // de estados, uno por uno, con awaitItem().
     @Test fun `primera carga pasa de Cargando a Exito`() = runTest {
         val red = CompletableDeferred<Unit>()
-        val repo = FakeCotizacionesRepository(desdeLaRed = listOf(oficial)).apply { pausa = red }
-        val vm = CotizacionesViewModel(repo)
+        val repo = FakeIndicadoresRepository(desdeLaRed = listOf(dolar)).apply { pausa = red }
+        val vm = IndicadoresViewModel(repo)
 
         vm.uiState.test {
-            assertEquals(CotizacionesUiState.Cargando, awaitItem())
+            assertEquals(IndicadoresUiState.Cargando, awaitItem())
             red.complete(Unit) // "llega" la respuesta
-            assertEquals(CotizacionesUiState.Exito(listOf(oficial)), expectMostRecentItem())
+            assertEquals(IndicadoresUiState.Exito(listOf(dolar)), expectMostRecentItem())
         }
     }
 
     @Test fun `con cache y sin conexion muestra los datos con aviso`() = runTest {
-        val repo = FakeCotizacionesRepository(listOf(oficial), resultado = Result.failure(FalloCotizaciones.SinConexion()))
-        val vm = CotizacionesViewModel(repo)
+        val repo = FakeIndicadoresRepository(listOf(dolar), resultado = Result.failure(FalloIndicadores.SinConexion()))
+        val vm = IndicadoresViewModel(repo)
         observar(vm.uiState)
 
-        assertEquals(CotizacionesUiState.Exito(listOf(oficial), aviso = "Sin conexión a internet"), vm.uiState.value)
+        assertEquals(IndicadoresUiState.Exito(listOf(dolar), aviso = "Sin conexión a internet"), vm.uiState.value)
     }
 
     @Test fun `no lanza una segunda peticion si ya hay una en curso`() = runTest {
         val red = CompletableDeferred<Unit>()
-        val repo = FakeCotizacionesRepository().apply { pausa = red }
-        val vm = CotizacionesViewModel(repo) // init ya lanzó una
+        val repo = FakeIndicadoresRepository().apply { pausa = red }
+        val vm = IndicadoresViewModel(repo) // init ya lanzó una
 
         vm.actualizar()
         vm.actualizar()

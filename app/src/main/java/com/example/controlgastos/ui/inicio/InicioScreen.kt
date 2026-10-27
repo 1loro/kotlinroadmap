@@ -136,10 +136,10 @@ private fun TarjetaSaldo(resumen: Resumen, saldoEnDolares: Double?, modifier: Mo
                 style = MaterialTheme.typography.displaySmall,
                 fontWeight = FontWeight.Bold,
             )
-            // null si no hay cotización (sin conexión y sin caché): se omite.
+            // null si no hay valor del dólar (sin conexión y sin caché): se omite.
             saldoEnDolares?.let { dolares ->
                 Text(
-                    "≈ ${formatearDolares(dolares)} al dólar oficial",
+                    "≈ ${formatearDolares(dolares)} al dólar observado",
                     style = MaterialTheme.typography.bodyMedium,
                 )
             }
@@ -196,7 +196,7 @@ private fun BarraCategoria(categoria: Categoria, total: Double, totalGastos: Dou
 private fun InicioPreview() {
     ControlGastosTheme {
         val movimientos = DatosDeEjemplo.movimientos()
-        val panel = PanelInicio(movimientos.resumen(), movimientos.take(5), saldoEnDolares = 280.26)
+        val panel = PanelInicio(movimientos.resumen(), movimientos.take(5), saldoEnDolares = 752.06)
         InicioScreen(InicioUiState.Listo(panel), {}, {}, {})
     }
 }

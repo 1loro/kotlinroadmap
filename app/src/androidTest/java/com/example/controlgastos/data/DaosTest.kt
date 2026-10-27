@@ -1,7 +1,7 @@
 package com.example.controlgastos.data
 
 import androidx.test.core.app.ApplicationProvider
-import com.example.controlgastos.data.local.CotizacionEntity
+import com.example.controlgastos.data.local.IndicadorEntity
 import com.example.controlgastos.data.local.GastosDatabase
 import com.example.controlgastos.data.local.MovimientoEntity
 import com.example.controlgastos.domain.model.Categoria
@@ -46,15 +46,15 @@ class DaosTest {
         assertNull(dao.observarPorId(id).first())
     }
 
-    @Test fun reemplazarCotizacionesBorraLasAnteriores() = runTest {
-        val dao = db.cotizacionDao()
-        dao.reemplazarTodas(listOf(cotizacion("blue", 1), cotizacion("oficial", 0)))
-        assertEquals(listOf("oficial", "blue"), dao.observarTodas().first().map { it.casa })
+    @Test fun reemplazarIndicadoresBorraLosAnteriores() = runTest {
+        val dao = db.indicadorDao()
+        dao.reemplazarTodas(listOf(indicador("euro", 1), indicador("dolar", 0)))
+        assertEquals(listOf("dolar", "euro"), dao.observarTodas().first().map { it.codigo })
 
-        dao.reemplazarTodas(listOf(cotizacion("mep", 0)))
-        assertEquals(listOf("mep"), dao.observarTodas().first().map { it.casa })
+        dao.reemplazarTodas(listOf(indicador("uf", 0)))
+        assertEquals(listOf("uf"), dao.observarTodas().first().map { it.codigo })
     }
 
-    private fun cotizacion(casa: String, orden: Int) =
-        CotizacionEntity(casa, casa, 1.0, 2.0, Instant.parse("2026-10-26T16:00:00Z"), orden)
+    private fun indicador(codigo: String, orden: Int) =
+        IndicadorEntity(codigo, codigo, 1.0, Instant.parse("2026-10-26T03:00:00Z"), orden)
 }

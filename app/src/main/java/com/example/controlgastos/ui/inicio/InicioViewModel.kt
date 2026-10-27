@@ -2,7 +2,7 @@ package com.example.controlgastos.ui.inicio
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.controlgastos.domain.repository.CotizacionesRepository
+import com.example.controlgastos.domain.repository.IndicadoresRepository
 import com.example.controlgastos.domain.usecase.ObtenerPanelInicioUseCase
 import com.example.controlgastos.domain.usecase.PanelInicio
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -26,7 +26,7 @@ sealed interface InicioUiState {
 @HiltViewModel
 class InicioViewModel @Inject constructor(
     obtenerPanel: ObtenerPanelInicioUseCase,
-    private val cotizaciones: CotizacionesRepository,
+    private val indicadores: IndicadoresRepository,
 ) : ViewModel() {
 
     // stateIn convierte el Flow en StateFlow (siempre tiene un valor actual).
@@ -37,9 +37,9 @@ class InicioViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), InicioUiState.Cargando)
 
     init {
-        // Pide cotizaciones nuevas al abrir la app para mostrar el saldo en
-        // dólares. Si falla no importa: se usa la caché, y la pestaña Dólar
-        // es la que informa los errores.
-        viewModelScope.launch { cotizaciones.actualizar() }
+        // Pide indicadores nuevos al abrir la app para mostrar el saldo en
+        // dólares. Si falla no importa: se usa la caché, y la pestaña
+        // Indicadores es la que informa los errores.
+        viewModelScope.launch { indicadores.actualizar() }
     }
 }

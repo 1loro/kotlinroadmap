@@ -2,11 +2,11 @@ package com.example.controlgastos
 
 import android.content.Context
 import com.example.controlgastos.data.di.InfraestructuraModule
-import com.example.controlgastos.data.local.CotizacionDao
+import com.example.controlgastos.data.local.IndicadorDao
 import com.example.controlgastos.data.local.GastosDatabase
 import com.example.controlgastos.data.local.MovimientoDao
-import com.example.controlgastos.data.remote.CotizacionDto
-import com.example.controlgastos.data.remote.DolarApi
+import com.example.controlgastos.data.remote.IndicadorDto
+import com.example.controlgastos.data.remote.IndicadoresApi
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -17,9 +17,9 @@ import javax.inject.Singleton
 
 /** API falsa: devuelve lo que diga `respuesta` (o lanza su excepción). */
 @Singleton
-class FakeDolarApi @Inject constructor() : DolarApi {
-    @Volatile var respuesta: () -> List<CotizacionDto> = { emptyList() }
-    override suspend fun obtenerDolares() = respuesta()
+class FakeIndicadoresApi @Inject constructor() : IndicadoresApi {
+    @Volatile var respuesta: () -> List<IndicadorDto> = { emptyList() }
+    override suspend fun obtenerIndicadores() = respuesta()
 }
 
 /**
@@ -40,8 +40,8 @@ object TestInfraestructuraModule {
     fun movimientoDao(db: GastosDatabase): MovimientoDao = db.movimientoDao()
 
     @Provides
-    fun cotizacionDao(db: GastosDatabase): CotizacionDao = db.cotizacionDao()
+    fun indicadorDao(db: GastosDatabase): IndicadorDao = db.indicadorDao()
 
     @Provides
-    fun dolarApi(fake: FakeDolarApi): DolarApi = fake
+    fun dolarApi(fake: FakeIndicadoresApi): IndicadoresApi = fake
 }
