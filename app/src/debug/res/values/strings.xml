@@ -2,5 +2,5 @@
 <!-- Recursos que solo existen en debug y reemplazan a los de src/main.
      Así se distingue a simple vista la versión debug de la release. -->
 <resources>
-    <string name="app_name">Gastos (debug)</string>
+    <string name="app_name">gastos. (debug)</string>
 </resources>
