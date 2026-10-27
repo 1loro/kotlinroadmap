@@ -1,10 +1,10 @@
-package com.example.controlgastos.ui.cotizaciones
+package com.example.controlgastos.ui.indicadores
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.controlgastos.domain.model.Cotizacion
-import com.example.controlgastos.domain.repository.CotizacionesRepository
-import com.example.controlgastos.domain.repository.FalloCotizaciones
+import com.example.controlgastos.domain.model.Indicador
+import com.example.controlgastos.domain.repository.IndicadoresRepository
+import com.example.controlgastos.domain.repository.FalloIndicadores
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,22 +17,22 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-// Lo que en la Fase 3 hacía CotizacionesRuta (estado + LaunchedEffect) ahora
+// Lo que en la Fase 3 hacía IndicadoresRuta (estado + LaunchedEffect) ahora
 // vive aquí: sobrevive a la rotación y se testea sin Compose.
 @HiltViewModel
-class CotizacionesViewModel @Inject constructor(
-    private val repositorio: CotizacionesRepository,
+class IndicadoresViewModel @Inject constructor(
+    private val repositorio: IndicadoresRepository,
 ) : ViewModel() {
 
     private val refresco = MutableStateFlow<Refresco>(Refresco.EnCurso)
     private var trabajo: Job? = null
 
-    val uiState: StateFlow<CotizacionesUiState> = combine(
+    val uiState: StateFlow<IndicadoresUiState> = combine(
         // null = Room todavía no respondió.
-        repositorio.cotizaciones.map<List<Cotizacion>, List<Cotizacion>?> { it }.onStart { emit(null) },
+        repositorio.indicadores.map<List<Indicador>, List<Indicador>?> { it }.onStart { emit(null) },
         refresco,
         ::calcularEstado,
-    ).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), CotizacionesUiState.Cargando)
+    ).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), IndicadoresUiState.Cargando)
 
     init {
         actualizar()
@@ -45,7 +45,7 @@ class CotizacionesViewModel @Inject constructor(
             refresco.value = Refresco.EnCurso
             refresco.value = repositorio.actualizar().fold(
                 onSuccess = { Refresco.Completado },
-                onFailure = { Refresco.Fallido((it as? FalloCotizaciones)?.mensaje ?: "Error inesperado") },
+                onFailure = { Refresco.Fallido((it as? FalloIndicadores)?.mensaje ?: "Error inesperado") },
             )
         }
     }

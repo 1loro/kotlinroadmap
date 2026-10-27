@@ -11,11 +11,11 @@ plugins {
 
 // --- Configuración externa (no se escribe en el código) ---
 // URL de la API: se puede cambiar sin tocar código, por ejemplo para apuntar a
-// un servidor de pruebas:  ./gradlew assembleDebug -PdolarApiUrl=https://...
-// o con la variable de entorno DOLAR_API_URL (así lo haría un pipeline de CI).
-val dolarApiUrl: String = providers.gradleProperty("dolarApiUrl")
-    .orElse(providers.environmentVariable("DOLAR_API_URL"))
-    .getOrElse("https://dolarapi.com/")
+// un servidor de pruebas:  ./gradlew assembleDebug -PindicadoresApiUrl=https://...
+// o con la variable de entorno INDICADORES_API_URL (así lo haría un pipeline de CI).
+val indicadoresApiUrl: String = providers.gradleProperty("indicadoresApiUrl")
+    .orElse(providers.environmentVariable("INDICADORES_API_URL"))
+    .getOrElse("https://mindicador.cl/")
 
 // Firma de release: los datos salen de keystore.properties (ignorado por Git)
 // o de variables de entorno (secretos de CI). Ver docs/FASE-5-profesional.md.
@@ -44,8 +44,8 @@ android {
         // Runner propio: arranca los tests con la Application de prueba de Hilt.
         testInstrumentationRunner = "com.example.controlgastos.HiltTestRunner"
 
-        // Constantes que el código lee como BuildConfig.DOLAR_API_URL.
-        buildConfigField("String", "DOLAR_API_URL", "\"$dolarApiUrl\"")
+        // Constantes que el código lee como BuildConfig.INDICADORES_API_URL.
+        buildConfigField("String", "INDICADORES_API_URL", "\"$indicadoresApiUrl\"")
     }
 
     signingConfigs {

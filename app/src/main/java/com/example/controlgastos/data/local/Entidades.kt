@@ -4,7 +4,7 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.TypeConverter
 import com.example.controlgastos.domain.model.Categoria
-import com.example.controlgastos.domain.model.Cotizacion
+import com.example.controlgastos.domain.model.Indicador
 import com.example.controlgastos.domain.model.Movimiento
 import java.time.Instant
 import java.time.LocalDate
@@ -23,14 +23,13 @@ data class MovimientoEntity(
     val fecha: LocalDate,
 )
 
-@Entity(tableName = "cotizaciones")
-data class CotizacionEntity(
-    @PrimaryKey val casa: String,
+@Entity(tableName = "indicadores")
+data class IndicadorEntity(
+    @PrimaryKey val codigo: String,
     val nombre: String,
-    val compra: Double?,
-    val venta: Double?,
-    val actualizada: Instant,
-    // Posición original en la respuesta de la API, para mostrarlas en ese orden.
+    val valor: Double,
+    val fecha: Instant,
+    // Orden en que se muestran (dólar, euro, UF, UTM).
     val orden: Int,
 )
 
@@ -50,4 +49,4 @@ fun MovimientoEntity.aModelo() = Movimiento(id, descripcion, monto, categoria, f
 
 fun Movimiento.aEntidad() = MovimientoEntity(id, descripcion, monto, categoria, fecha)
 
-fun CotizacionEntity.aModelo() = Cotizacion(casa, nombre, compra, venta, actualizada)
+fun IndicadorEntity.aModelo() = Indicador(codigo, nombre, valor, fecha)

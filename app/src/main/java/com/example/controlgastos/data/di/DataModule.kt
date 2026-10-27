@@ -2,15 +2,15 @@ package com.example.controlgastos.data.di
 
 import android.content.Context
 import com.example.controlgastos.BuildConfig
-import com.example.controlgastos.data.local.CotizacionDao
+import com.example.controlgastos.data.local.IndicadorDao
 import com.example.controlgastos.data.local.GastosDatabase
 import com.example.controlgastos.data.local.MovimientoDao
-import com.example.controlgastos.data.remote.DolarApi
-import com.example.controlgastos.data.remote.crearDolarApi
-import com.example.controlgastos.data.repository.CotizacionesRepositoryImpl
+import com.example.controlgastos.data.remote.IndicadoresApi
+import com.example.controlgastos.data.remote.crearIndicadoresApi
+import com.example.controlgastos.data.repository.IndicadoresRepositoryImpl
 import com.example.controlgastos.data.repository.MovimientosRepositoryImpl
 import com.example.controlgastos.data.seguridad.GestorClaves
-import com.example.controlgastos.domain.repository.CotizacionesRepository
+import com.example.controlgastos.domain.repository.IndicadoresRepository
 import com.example.controlgastos.domain.repository.MovimientosRepository
 import dagger.Binds
 import dagger.Module
@@ -39,11 +39,11 @@ object InfraestructuraModule {
     fun movimientoDao(db: GastosDatabase): MovimientoDao = db.movimientoDao()
 
     @Provides
-    fun cotizacionDao(db: GastosDatabase): CotizacionDao = db.cotizacionDao()
+    fun indicadorDao(db: GastosDatabase): IndicadorDao = db.indicadorDao()
 
     @Provides @Singleton
-    fun dolarApi(): DolarApi =
-        crearDolarApi(baseUrl = BuildConfig.DOLAR_API_URL, registrarPeticiones = BuildConfig.DEBUG)
+    fun dolarApi(): IndicadoresApi =
+        crearIndicadoresApi(baseUrl = BuildConfig.INDICADORES_API_URL, registrarPeticiones = BuildConfig.DEBUG)
 }
 
 /** "Cuando alguien pida la interfaz X, dale la implementación Y". */
@@ -55,5 +55,5 @@ abstract class RepositoriosModule {
     abstract fun movimientos(impl: MovimientosRepositoryImpl): MovimientosRepository
 
     @Binds @Singleton
-    abstract fun cotizaciones(impl: CotizacionesRepositoryImpl): CotizacionesRepository
+    abstract fun indicadores(impl: IndicadoresRepositoryImpl): IndicadoresRepository
 }

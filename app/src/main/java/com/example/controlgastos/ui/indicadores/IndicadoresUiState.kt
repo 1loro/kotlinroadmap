@@ -1,6 +1,6 @@
-package com.example.controlgastos.ui.cotizaciones
+package com.example.controlgastos.ui.indicadores
 
-import com.example.controlgastos.domain.model.Cotizacion
+import com.example.controlgastos.domain.model.Indicador
 
 /** Estado de la última petición a la API. */
 sealed interface Refresco {
@@ -13,12 +13,12 @@ sealed interface Refresco {
  * Lo que la pantalla debe mostrar. Una `sealed interface` obliga a que el
  * `when` de la UI contemple TODOS los casos: el compilador avisa si falta uno.
  */
-sealed interface CotizacionesUiState {
+sealed interface IndicadoresUiState {
     /** Todavía no hay nada que mostrar. */
-    data object Cargando : CotizacionesUiState
+    data object Cargando : IndicadoresUiState
 
     /** Falló y no hay datos guardados. */
-    data class Error(val mensaje: String) : CotizacionesUiState
+    data class Error(val mensaje: String) : IndicadoresUiState
 
     /**
      * Hay datos (de la red o de la caché).
@@ -26,25 +26,25 @@ sealed interface CotizacionesUiState {
      * @param aviso la última actualización falló: los datos pueden estar viejos.
      */
     data class Exito(
-        val cotizaciones: List<Cotizacion>,
+        val indicadores: List<Indicador>,
         val actualizando: Boolean = false,
         val aviso: String? = null,
-    ) : CotizacionesUiState
+    ) : IndicadoresUiState
 }
 
 /**
  * Combina la caché local con el estado de la petición.
  * @param cache null mientras Room todavía no respondió.
  */
-fun calcularEstado(cache: List<Cotizacion>?, refresco: Refresco): CotizacionesUiState = when {
+fun calcularEstado(cache: List<Indicador>?, refresco: Refresco): IndicadoresUiState = when {
     cache.isNullOrEmpty() -> when (refresco) {
-        Refresco.EnCurso -> CotizacionesUiState.Cargando
-        is Refresco.Fallido -> CotizacionesUiState.Error(refresco.mensaje)
+        Refresco.EnCurso -> IndicadoresUiState.Cargando
+        is Refresco.Fallido -> IndicadoresUiState.Error(refresco.mensaje)
         // Terminó bien pero Room aún no emitió (o la API devolvió una lista vacía).
-        Refresco.Completado -> if (cache == null) CotizacionesUiState.Cargando else CotizacionesUiState.Exito(emptyList())
+        Refresco.Completado -> if (cache == null) IndicadoresUiState.Cargando else IndicadoresUiState.Exito(emptyList())
     }
-    else -> CotizacionesUiState.Exito(
-        cotizaciones = cache,
+    else -> IndicadoresUiState.Exito(
+        indicadores = cache,
         actualizando = refresco == Refresco.EnCurso,
         aviso = (refresco as? Refresco.Fallido)?.mensaje,
     )

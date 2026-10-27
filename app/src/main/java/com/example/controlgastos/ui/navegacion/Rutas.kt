@@ -6,6 +6,6 @@ import kotlinx.serialization.Serializable
 // son propiedades, así el compilador verifica que se pasen correctamente.
 @Serializable object Inicio
 @Serializable object Movimientos
-@Serializable object Cotizaciones
+@Serializable object Indicadores
 @Serializable data class Detalle(val id: Long)
 @Serializable object NuevoMovimiento
