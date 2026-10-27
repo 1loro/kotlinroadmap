@@ -1,22 +1,25 @@
-# Control de Gastos — Roadmap Android con Kotlin
+# gastos. — Roadmap Android con Kotlin
 
 [![CI](https://github.com/1loro/kotlinroadmap/actions/workflows/ci.yml/badge.svg)](https://github.com/1loro/kotlinroadmap/actions/workflows/ci.yml)
 
-App Android nativa para registrar ingresos y gastos en pesos chilenos y consultar los indicadores económicos de Chile (dólar observado, euro, UF, UTM), con prácticas de seguridad de una app bancaria. Es el **proyecto integrador** de un roadmap de formación en desarrollo Android con Kotlin: la misma app crece fase a fase y cada fase suma una capa (UI → datos → arquitectura → seguridad).
+Versión nativa para Android de **[gastos.](https://gastos-pi-five.vercel.app)**, la PWA de gastos personales: el mismo diseño y **la misma cuenta** que en el iPhone. Registra tus gastos en segundos, ordénalos por categoría y compara mes a mes. Se le suman ingresos locales, indicadores de Chile (dólar, euro, UF, UTM) y prácticas de seguridad de una app bancaria.
 
-| Inicio | Movimientos | Indicadores (sin conexión) |
+Es el **proyecto integrador** de un roadmap de formación en Android con Kotlin: la app creció fase a fase (UI → datos → arquitectura → seguridad) y terminó conectada al backend de la web. Ver [docs/APP-GASTOS.md](docs/APP-GASTOS.md).
+
+| Inicio | Movimientos | Comparar |
 |---|---|---|
-| Saldo, gasto por categoría y equivalente en USD | Lista con filtros por tipo | Valores guardados con aviso |
+| "Este mes llevas $X.", proyección, últimos 6 meses y gasto por categoría | Historial del mes agrupado por día | Mes A contra mes B, tendencia de 12 meses y detalle por categoría |
 
 ## Funcionalidades
 
-- Registrar ingresos y gastos en pesos chilenos (sin decimales; "15.000" = quince mil), con validación del formulario.
-- Ver el saldo, el total de ingresos y gastos, y el gasto por categoría.
-- Filtrar movimientos, ver el detalle y eliminarlos con confirmación.
-- Indicadores del Banco Central de Chile (dólar observado, euro, UF y UTM) desde [mindicador.cl](https://mindicador.cl), con caché local: funciona sin conexión.
-- Saldo convertido a dólares al dólar observado.
-- Bloqueo con huella o PIN del dispositivo.
-- Modo claro y oscuro (Material 3).
+- Iniciar sesión con la misma cuenta de la web y la PWA, o crear una.
+- Registrar, editar y eliminar gastos con categoría, fecha (Hoy, Ayer u otra) y nota. Se sincronizan con la cuenta.
+- Inicio con lo gastado en el mes, promedio diario, proyección, variación contra el mes anterior, últimos 6 meses y gasto por categoría.
+- Movimientos por mes, agrupados por día; comparación de dos meses por categoría.
+- Categorías con los mismos íconos que la web: crear, editar, archivar y eliminar.
+- Perfil (nombre, moneda, zona horaria) y tema claro, oscuro o según el sistema.
+- **Solo en Android:** ingresos locales con balance del mes, indicadores del Banco Central de Chile ([mindicador.cl](https://mindicador.cl)) y bloqueo con huella o PIN.
+- Funciona sin conexión con la última copia guardada.
 
 ## Seguridad
 
@@ -53,6 +56,7 @@ Detalle y relación con el OWASP Mobile Top 10: [docs/FASE-5-profesional.md](doc
 | 3 | Datos, red y persistencia: Room, Retrofit, offline-first | ✅ | [docs/FASE-3-datos.md](docs/FASE-3-datos.md) |
 | 4 | Arquitectura: MVVM, capas domain/data/ui, Hilt, tests de ViewModels | ✅ | [docs/FASE-4-arquitectura.md](docs/FASE-4-arquitectura.md) |
 | 5 | Contexto bancario: Git en equipo, seguridad, CI/CD, publicación | ✅ | [docs/FASE-5-profesional.md](docs/FASE-5-profesional.md) |
+| + | La app de la PWA en Android: misma cuenta, mismo diseño | ✅ | [docs/APP-GASTOS.md](docs/APP-GASTOS.md) |
 
 Cada guía explica qué se hizo y por qué, e incluye ejercicios de práctica.
 
@@ -91,14 +95,14 @@ Desde la terminal:
 ./gradlew :fase0-kotlin:run              # demo de los ejercicios de la Fase 0
 ```
 
-Configuración opcional: `-PindicadoresApiUrl=https://...` (o la variable de entorno `INDICADORES_API_URL`) cambia el servidor de indicadores.
+Configuración opcional: `-PgastosApiUrl=https://...` (o `GASTOS_API_URL`) cambia el backend de gastos., y `-PindicadoresApiUrl=` (o `INDICADORES_API_URL`) el de indicadores.
 
 ## Tests
 
 | Tipo | Qué cubre |
 |---|---|
-| Unitarios (JVM) | Casos de uso, los 6 ViewModels, repositorio contra un servidor HTTP falso, lógica de resumen, ejercicios de la Fase 0 |
-| Instrumentados | Room con SQLite real, migración de la BD, Keystore y BD cifrada, y flujos completos de UI con Hilt (agregar, filtrar, indicadores, sin conexión, bloqueo) |
+| Unitarios (JVM) | Cálculos portados de la web, los ViewModels con repositorios falsos, el cliente de la API contra un servidor HTTP falso y los ejercicios de la Fase 0 |
+| Instrumentados | Room con SQLite real, migraciones de la BD, Keystore y BD cifrada, y la app completa con un backend falso (login, registrar, editar, eliminar, ingresos, sin conexión, cerrar sesión, bloqueo) |
 
 ## Licencia
 
