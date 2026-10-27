@@ -1,5 +1,7 @@
 # Fase 3 — Datos, red y persistencia
 
+> **Nota (contexto Chile):** la app pasó de DolarApi (Argentina) a **mindicador.cl** (Chile): ver la sección [Cambio a indicadores de Chile](#cambio-a-indicadores-de-chile-migración-de-la-bd) al final.
+>
 > **Nota (desde la Fase 4):** `AppContainer` se reemplazó por Hilt, los repositorios se movieron a `data/repository/` (con interfaces en `domain/`) y la lógica de `CotizacionesRuta` pasó a `CotizacionesViewModel`. El código de esta fase se ve con `git show fac07a7`.
 
 Entregable cumplido: la app consume una API pública, muestra los datos y los guarda localmente. Además, los movimientos ahora persisten en una base de datos.
@@ -75,8 +77,33 @@ Moraleja: un test intermitente no se "arregla" subiendo el timeout. Hay que medi
 ## Práctica (hazlo tú)
 
 1. **Comprueba la persistencia:** agrega un gasto, cierra la app desde *Recientes* y vuelve a abrirla.
-2. **Comprueba el modo sin conexión:** activa el modo avión, abre "Dólar" y mira el aviso. Desactívalo y desliza hacia abajo.
-3. **Mira la red:** en Logcat filtra por `okhttp` y verás `--> GET https://dolarapi.com/v1/dolares`.
+2. **Comprueba el modo sin conexión:** activa el modo avión, abre "Indicadores" y mira el aviso. Desactívalo y desliza hacia abajo.
+3. **Mira la red:** en Logcat filtra por `okhttp` y verás `--> GET https://mindicador.cl/api`.
 4. **Explora la BD:** en Android Studio abre *App Inspection → Database Inspector* y ejecuta `SELECT categoria, SUM(monto) FROM movimientos GROUP BY categoria`.
 5. **Migración (desafío):** agrega `val nota: String? = null` a `MovimientoEntity`, sube a `version = 2` y escribe la `Migration(1, 2)` con `ALTER TABLE movimientos ADD COLUMN nota TEXT`.
 6. **Nueva consulta:** agrega al DAO `@Query("SELECT * FROM movimientos WHERE descripcion LIKE '%' || :texto || '%'")` y un buscador en la pantalla Movimientos.
+
+## Cambio a indicadores de Chile (migración de la BD)
+
+Después de la Fase 5, la app se adaptó al contexto chileno:
+
+| Antes | Ahora |
+|---|---|
+| DolarApi: dólar en Argentina (oficial, blue, MEP…) con compra/venta | [mindicador.cl](https://mindicador.cl): dólar observado, euro, UF y UTM del Banco Central de Chile |
+| Pesos argentinos con decimales (`$ 1.234,50`) | Pesos chilenos **sin decimales** (`$1.250.000`); el monto se escribe con punto de miles: `15.000` |
+| Tabla `cotizaciones` (BD versión 1) | Tabla `indicadores` (BD versión 2) |
+
+Hay dos puntos interesantes:
+
+**1. La respuesta no es una lista.** mindicador.cl devuelve un objeto con una clave por indicador:
+
+```json
+{ "version": "1.7.0", "dolar": { "codigo": "dolar", "valor": 990.35, ... }, "uf": { ... }, "tpm": { ... } }
+```
+
+Retrofit la recibe como `JsonObject` y `extraerIndicadores()` (en `IndicadoresApi.kt`) toma solo los indicadores en pesos, en un orden fijo. Si no viene ninguno, el repositorio lo trata como **datos inválidos** y no borra la caché.
+
+**2. Migración de Room.** Cambiar una entidad cambia el esquema. Sin migración, Room no puede abrir la BD de quien ya tenía la app instalada. Por eso:
+- `@Database(version = 2)` y el esquema nuevo se exportó a `app/schemas/.../2.json`.
+- `MIGRACION_1_2` borra la tabla vieja `cotizaciones` (era solo caché) y crea `indicadores`, **sin tocar `movimientos`**.
+- `MigracionTest` crea una BD en la versión 1 con datos, la migra y verifica con `MigrationTestHelper` que el resultado coincide exactamente con el esquema 2 y que los movimientos siguen ahí.
