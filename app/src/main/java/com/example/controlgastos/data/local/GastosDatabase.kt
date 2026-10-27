@@ -9,6 +9,7 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.controlgastos.data.DatosDeEjemplo
+import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
 
 // version: subirla cada vez que cambie el esquema (y agregar una migración,
 // si no los usuarios perderían sus datos). El esquema exportado queda en
@@ -24,17 +25,34 @@ abstract class GastosDatabase : RoomDatabase() {
     abstract fun cotizacionDao(): CotizacionDao
 
     companion object {
-        private const val NOMBRE = "gastos.db"
+        private const val NOMBRE = "gastos_cifrada.db"
+        // Archivo de las fases 3 y 4, sin cifrar (ver construirCifrada).
+        private const val NOMBRE_SIN_CIFRAR = "gastos.db"
 
-        /** @param enMemoria true para tests: la BD vive solo mientras corre el proceso. */
-        fun construir(context: Context, enMemoria: Boolean = false): GastosDatabase {
-            val builder = if (enMemoria) {
-                Room.inMemoryDatabaseBuilder(context, GastosDatabase::class.java)
-            } else {
-                Room.databaseBuilder(context, GastosDatabase::class.java, NOMBRE)
-            }
-            return builder.addCallback(SembrarDatosDeEjemplo).build()
+        /**
+         * BD real de la app, cifrada con SQLCipher (AES-256). Sin la clave, el
+         * archivo es ilegible aunque alguien lo copie del teléfono (root,
+         * backup, teléfono robado).
+         *
+         * @param clave 32 bytes aleatorios protegidos por el Keystore (GestorClaves).
+         */
+        fun construirCifrada(context: Context, clave: ByteArray): GastosDatabase {
+            System.loadLibrary("sqlcipher")
+            // La BD sin cifrar de versiones anteriores no puede abrirse como
+            // cifrada: se descarta y se empieza con los datos de ejemplo. En
+            // una app real se migraría con sqlcipher_export (ver docs/FASE-5).
+            context.deleteDatabase(NOMBRE_SIN_CIFRAR)
+            return Room.databaseBuilder(context, GastosDatabase::class.java, NOMBRE)
+                .openHelperFactory(SupportOpenHelperFactory(clave))
+                .addCallback(SembrarDatosDeEjemplo)
+                .build()
         }
+
+        /** Para tests: BD en memoria (sin cifrar), vive solo mientras corre el proceso. */
+        fun construirEnMemoria(context: Context): GastosDatabase =
+            Room.inMemoryDatabaseBuilder(context, GastosDatabase::class.java)
+                .addCallback(SembrarDatosDeEjemplo)
+                .build()
     }
 }
 

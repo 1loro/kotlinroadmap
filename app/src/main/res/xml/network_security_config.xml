@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Seguridad de red (referenciada desde AndroidManifest.xml). -->
+<network-security-config>
+    <!-- Producción: SOLO HTTPS (cleartext = HTTP sin cifrar, prohibido) y solo
+         certificados de autoridades del sistema. Un certificado instalado por
+         el usuario (típico de un ataque de intermediario o "MITM") no se acepta. -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+
+    <!-- Solo en debug: acepta también certificados del usuario, para poder
+         inspeccionar el tráfico con un proxy (Charles, mitmproxy) al desarrollar. -->
+    <debug-overrides>
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="user" />
+        </trust-anchors>
+    </debug-overrides>
+</network-security-config>

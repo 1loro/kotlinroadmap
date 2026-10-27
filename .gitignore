@@ -20,3 +20,8 @@ build/
 
 # Documento interno de capacitación: no se publica en el repo
 roadmap-android-kotlin.pdf
+
+# Firma de la app: claves y contraseñas NUNCA van al repositorio
+keystore.properties
+*.jks
+*.keystore

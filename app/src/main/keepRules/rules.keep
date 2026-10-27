@@ -1,12 +1,14 @@
-# Add project specific R8 rules here.
-# AGP will combine all keep rule files in src/main/keepRules to pass to R8
+# Reglas de R8 para la versión release.
+# AGP combina todos los archivos de src/main/keepRules y se los pasa a R8.
+# Más información: https://d.android.com/r/tools/r8/keep-rules
 #
-# For more details, see
-#   https://d.android.com/r/tools/r8/keep-rules
+# Las librerías que usa la app (Retrofit, kotlinx.serialization, Room, Hilt)
+# traen sus propias reglas: aquí solo va lo específico de esta app.
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# Seguridad: elimina de la release las llamadas a Log.v/d/i (podrían filtrar
+# datos en Logcat). Log.w y Log.e se conservan para diagnosticar errores.
+-assumenosideeffects class android.util.Log {
+    public static int v(...);
+    public static int d(...);
+    public static int i(...);
+}

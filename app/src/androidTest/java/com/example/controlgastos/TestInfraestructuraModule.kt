@@ -34,7 +34,7 @@ object TestInfraestructuraModule {
 
     @Provides @Singleton
     fun baseDeDatos(@ApplicationContext context: Context): GastosDatabase =
-        GastosDatabase.construir(context, enMemoria = true)
+        GastosDatabase.construirEnMemoria(context)
 
     @Provides
     fun movimientoDao(db: GastosDatabase): MovimientoDao = db.movimientoDao()

@@ -9,6 +9,7 @@ import com.example.controlgastos.data.remote.DolarApi
 import com.example.controlgastos.data.remote.crearDolarApi
 import com.example.controlgastos.data.repository.CotizacionesRepositoryImpl
 import com.example.controlgastos.data.repository.MovimientosRepositoryImpl
+import com.example.controlgastos.data.seguridad.GestorClaves
 import com.example.controlgastos.domain.repository.CotizacionesRepository
 import com.example.controlgastos.domain.repository.MovimientosRepository
 import dagger.Binds
@@ -31,7 +32,8 @@ import javax.inject.Singleton
 object InfraestructuraModule {
 
     @Provides @Singleton
-    fun baseDeDatos(@ApplicationContext context: Context): GastosDatabase = GastosDatabase.construir(context)
+    fun baseDeDatos(@ApplicationContext context: Context, claves: GestorClaves): GastosDatabase =
+        GastosDatabase.construirCifrada(context, claves.claveBaseDeDatos())
 
     @Provides
     fun movimientoDao(db: GastosDatabase): MovimientoDao = db.movimientoDao()
@@ -40,7 +42,8 @@ object InfraestructuraModule {
     fun cotizacionDao(db: GastosDatabase): CotizacionDao = db.cotizacionDao()
 
     @Provides @Singleton
-    fun dolarApi(): DolarApi = crearDolarApi(registrarPeticiones = BuildConfig.DEBUG)
+    fun dolarApi(): DolarApi =
+        crearDolarApi(baseUrl = BuildConfig.DOLAR_API_URL, registrarPeticiones = BuildConfig.DEBUG)
 }
 
 /** "Cuando alguien pida la interfaz X, dale la implementación Y". */
