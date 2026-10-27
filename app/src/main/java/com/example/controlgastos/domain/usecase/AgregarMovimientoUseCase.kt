@@ -59,8 +59,12 @@ class AgregarMovimientoUseCase @Inject constructor(
 }
 
 /**
- * Convierte el texto del monto ("1500,50" o "1500.50") a número.
+ * Convierte el texto del monto en pesos chilenos a número. El peso chileno no
+ * usa decimales y en Chile el punto separa los miles: "15.000" es quince mil.
  * Devuelve null si no es un monto válido y mayor que cero.
  */
-fun parsearMonto(texto: String): Double? =
-    texto.trim().replace(',', '.').toDoubleOrNull()?.takeIf { it > 0 }
+fun parsearMonto(texto: String): Double? {
+    val digitos = texto.trim().replace(".", "")
+    if (digitos.isEmpty() || !digitos.all { it.isDigit() }) return null
+    return digitos.toLongOrNull()?.takeIf { it > 0 }?.toDouble()
+}

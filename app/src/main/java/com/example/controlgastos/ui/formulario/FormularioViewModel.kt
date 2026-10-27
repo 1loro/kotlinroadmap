@@ -52,9 +52,8 @@ class FormularioViewModel @Inject constructor(
     fun cambiarDescripcion(texto: String) = actualizar { copy(descripcion = texto) }
 
     fun cambiarMonto(texto: String) {
-        // Solo dígitos y un separador decimal.
-        val valido = texto.all { it.isDigit() || it == ',' || it == '.' } && texto.count { it == ',' || it == '.' } <= 1
-        if (valido) actualizar { copy(montoTexto = texto) }
+        // Pesos chilenos: solo dígitos y puntos de miles (sin decimales).
+        if (texto.all { it.isDigit() || it == '.' }) actualizar { copy(montoTexto = texto) }
     }
 
     fun elegirCategoria(categoria: Categoria) = actualizar { copy(categoria = categoria) }

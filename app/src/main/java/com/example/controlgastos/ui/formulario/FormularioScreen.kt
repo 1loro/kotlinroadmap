@@ -133,7 +133,7 @@ fun FormularioScreen(
                 singleLine = true,
                 isError = errorMonto != null,
                 supportingText = errorMonto?.let { { Text(it) } },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Done),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
                 modifier = Modifier.fillMaxWidth(),
             )
 
