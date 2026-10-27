@@ -8,16 +8,20 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.core.view.WindowCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.controlgastos.ui.navegacion.AppViewModel
 import com.example.controlgastos.ui.navegacion.GastosApp
 import com.example.controlgastos.ui.seguridad.Autenticador
 import com.example.controlgastos.ui.seguridad.BloqueoViewModel
 import com.example.controlgastos.ui.seguridad.PantallaBloqueo
-import com.example.controlgastos.ui.theme.ControlGastosTheme
+import com.example.controlgastos.ui.theme.Gastos
+import com.example.controlgastos.ui.theme.GastosTheme
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -35,6 +39,7 @@ class MainActivity : FragmentActivity() {
     @Inject lateinit var autenticador: Autenticador
 
     private val bloqueo: BloqueoViewModel by viewModels()
+    private val app: AppViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -48,7 +53,17 @@ class MainActivity : FragmentActivity() {
 
         enableEdgeToEdge()
         setContent {
-            ControlGastosTheme {
+            val tema by app.tema.collectAsStateWithLifecycle()
+            GastosTheme(tema) {
+                // Íconos de la barra de estado oscuros sobre fondo claro y viceversa,
+                // según el tema de la APP (no el del sistema).
+                val oscuro = Gastos.colores.esOscuro
+                SideEffect {
+                    WindowCompat.getInsetsController(window, window.decorView).apply {
+                        isAppearanceLightStatusBars = !oscuro
+                        isAppearanceLightNavigationBars = !oscuro
+                    }
+                }
                 val bloqueada by bloqueo.bloqueada.collectAsStateWithLifecycle()
                 val error by bloqueo.error.collectAsStateWithLifecycle()
 
@@ -60,7 +75,7 @@ class MainActivity : FragmentActivity() {
                     // La app sigue compuesta debajo (así no pierde la pantalla en
                     // la que estaba), pero sin semántica: TalkBack no puede leer
                     // los saldos mientras está bloqueada.
-                    GastosApp(modifier = if (bloqueada) Modifier.clearAndSetSemantics {} else Modifier)
+                    GastosApp(app, modifier = if (bloqueada) Modifier.clearAndSetSemantics {} else Modifier)
                     if (bloqueada) PantallaBloqueo(error, onDesbloquear = ::pedirAutenticacion)
                 }
             }

@@ -17,6 +17,11 @@ val indicadoresApiUrl: String = providers.gradleProperty("indicadoresApiUrl")
     .orElse(providers.environmentVariable("INDICADORES_API_URL"))
     .getOrElse("https://mindicador.cl/")
 
+// Backend de gastos. (la misma cuenta que la PWA): -PgastosApiUrl=... o GASTOS_API_URL.
+val gastosApiUrl: String = providers.gradleProperty("gastosApiUrl")
+    .orElse(providers.environmentVariable("GASTOS_API_URL"))
+    .getOrElse("https://gastos-pi-five.vercel.app/")
+
 // Firma de release: los datos salen de keystore.properties (ignorado por Git)
 // o de variables de entorno (secretos de CI). Ver docs/FASE-5-profesional.md.
 val firma = Properties().apply {
@@ -46,6 +51,7 @@ android {
 
         // Constantes que el código lee como BuildConfig.INDICADORES_API_URL.
         buildConfigField("String", "INDICADORES_API_URL", "\"$indicadoresApiUrl\"")
+        buildConfigField("String", "GASTOS_API_URL", "\"$gastosApiUrl\"")
     }
 
     signingConfigs {

@@ -3,7 +3,9 @@ package com.example.controlgastos.data
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.example.controlgastos.data.local.GastosDatabase
+import com.example.controlgastos.data.local.IngresoEntity
 import com.example.controlgastos.data.seguridad.GestorClaves
+import com.example.controlgastos.domain.model.TipoIngreso
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -14,6 +16,7 @@ import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.time.LocalDate
 
 // Se ejecuta en el dispositivo: el Keystore y SQLCipher no existen en la JVM.
 class SeguridadTest {
@@ -49,7 +52,12 @@ class SeguridadTest {
     @Test fun laBdCifradaSoloAbreConSuClave() = runTest {
         val clave = GestorClaves(context).claveBaseDeDatos()
         GastosDatabase.construirCifrada(context, clave).apply {
-            assertEquals(9, movimientoDao().observarTodos().first().size)
+            ingresoDao().insertar(IngresoEntity(monto = 850_000.0, tipo = TipoIngreso.SUELDO, nota = null, fecha = LocalDate.of(2026, 10, 1)))
+            close()
+        }
+        // Con la misma clave se vuelve a abrir y los datos siguen ahí.
+        GastosDatabase.construirCifrada(context, clave).apply {
+            assertEquals(1, ingresoDao().observarEntre(0, Long.MAX_VALUE).first().size)
             close()
         }
 
@@ -62,7 +70,7 @@ class SeguridadTest {
         val claveIncorrecta = ByteArray(32) { 7 }
         val fallo = runCatching {
             GastosDatabase.construirCifrada(context, claveIncorrecta).apply {
-                movimientoDao().observarTodos().first()
+                ingresoDao().observarEntre(0, Long.MAX_VALUE).first()
                 close()
             }
         }

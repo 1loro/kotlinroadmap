@@ -1,16 +1,12 @@
 package com.example.controlgastos.data.repository
 
 import com.example.controlgastos.data.local.IndicadorDao
-import com.example.controlgastos.data.local.MovimientoDao
-import com.example.controlgastos.data.local.aEntidad
 import com.example.controlgastos.data.local.aModelo
 import com.example.controlgastos.data.remote.IndicadoresApi
 import com.example.controlgastos.data.remote.aEntidad
 import com.example.controlgastos.domain.model.Indicador
-import com.example.controlgastos.domain.model.Movimiento
 import com.example.controlgastos.domain.repository.FalloIndicadores
 import com.example.controlgastos.domain.repository.IndicadoresRepository
-import com.example.controlgastos.domain.repository.MovimientosRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.SerializationException
@@ -18,23 +14,6 @@ import retrofit2.HttpException
 import java.io.IOException
 import java.time.format.DateTimeParseException
 import javax.inject.Inject
-
-// Implementaciones de las interfaces del dominio con Room y Retrofit.
-// `@Inject constructor`: Hilt sabe construirlas pidiendo sus dependencias.
-
-class MovimientosRepositoryImpl @Inject constructor(
-    private val dao: MovimientoDao,
-) : MovimientosRepository {
-
-    override val movimientos: Flow<List<Movimiento>> =
-        dao.observarTodos().map { lista -> lista.map { it.aModelo() } }
-
-    override fun movimiento(id: Long): Flow<Movimiento?> = dao.observarPorId(id).map { it?.aModelo() }
-
-    override suspend fun agregar(movimiento: Movimiento): Long = dao.insertar(movimiento.aEntidad().copy(id = 0))
-
-    override suspend fun eliminar(id: Long) = dao.eliminar(id)
-}
 
 /**
  * Estrategia "offline-first":
