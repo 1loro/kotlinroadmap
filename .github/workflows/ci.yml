@@ -74,7 +74,50 @@ jobs:
           arch: x86_64
           target: google_apis
           disable-animations: true
-          script: ./gradlew :app:connectedDebugAndroidTest
+          # pipefail: que el paso falle si fallan los tests, aunque la salida
+          # pase por `tee` (que la guarda en un archivo para el paso siguiente).
+          script: bash -c "set -o pipefail; ./gradlew :app:connectedDebugAndroidTest 2>&1 | tee instrumentados.log"
+
+      # Los logs de Actions solo los ve quien inicia sesión. Las anotaciones
+      # (::error) se ven en el resumen del run y en el PR: aquí se publica qué
+      # test falló y por qué, para no tener que buscarlo en el log.
+      - name: Publicar los tests que fallaron
+        if: failure()
+        run: |
+          python3 - <<'EOF'
+          import glob, html, re
+
+          def anotar(titulo, lineas):
+              mensaje = "%0A".join(l.replace("%", "%25").rstrip() for l in lineas)
+              print(f"::error title={titulo}::{mensaje[:3000]}")
+
+          hubo_fallos = False
+          for archivo in glob.glob("app/build/outputs/androidTest-results/connected/**/TEST-*.xml", recursive=True):
+              xml = open(archivo, encoding="utf-8").read()
+              patron = r'<testcase name="([^"]+)" classname="([^"]+)"[^>]*>\s*<failure[^>]*>(.*?)</failure>'
+              for m in re.finditer(patron, xml, re.S):
+                  hubo_fallos = True
+                  clase = m.group(2).split(".")[-1]
+                  anotar(f"{clase}.{m.group(1)}", html.unescape(m.group(3)).strip().splitlines()[:15])
+
+          # Si no hay resultados de tests, el problema fue antes (build, instalación).
+          if not hubo_fallos:
+              try:
+                  log = open("instrumentados.log", encoding="utf-8", errors="replace").read().splitlines()
+                  anotar("Fallo antes de los tests", log[-25:])
+              except FileNotFoundError:
+                  anotar("Fallo antes de los tests", ["No se generó instrumentados.log"])
+          EOF
+
+      - name: Guardar reportes de los tests instrumentados
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: reportes-instrumentados
+          path: |
+            app/build/reports/androidTests/
+            app/build/outputs/androidTest-results/
+            instrumentados.log
 
   # Solo en main: genera el App Bundle (.aab) firmado, listo para Play Store.
   release:

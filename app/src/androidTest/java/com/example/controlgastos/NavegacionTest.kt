@@ -2,6 +2,8 @@ package com.example.controlgastos
 
 import android.os.SystemClock
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasScrollAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
@@ -9,6 +11,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.printToLog
 import androidx.test.core.app.ActivityScenario
@@ -57,7 +60,7 @@ class NavegacionTest {
 
     @Test fun agregarVerYEliminarUnGasto() {
         abrirApp()
-        compose.esperarTexto("Feria")
+        compose.desplazarHasta("Feria")
 
         compose.onNodeWithContentDescription("Nuevo movimiento").performClick()
         compose.onNodeWithText("Guardar").performClick()
@@ -68,7 +71,7 @@ class NavegacionTest {
         compose.onNodeWithText("🎬 Ocio").performClick()
         compose.onNodeWithText("Guardar").performClick()
 
-        compose.esperarTexto("Café de prueba")
+        compose.desplazarHasta("Café de prueba")
         // Pesos chilenos: sin decimales y con punto de miles.
         compose.onNodeWithText("-${formatearMonto(1234.0)}").assertIsDisplayed()
         compose.onNodeWithText("Café de prueba").performClick()
@@ -77,6 +80,9 @@ class NavegacionTest {
         compose.onNodeWithContentDescription("Eliminar").performClick()
         compose.onNodeWithText("Eliminar").performClick()
 
+        // "Feria" estaba justo debajo del gasto nuevo: con ella a la vista, el
+        // gasto se vería si siguiera existiendo.
+        compose.desplazarHasta("Feria")
         compose.esperarHasta("que desaparezca el gasto") { !hayTexto("Café de prueba") }
         compose.onNodeWithText("Control de Gastos").assertIsDisplayed()
     }
@@ -84,7 +90,7 @@ class NavegacionTest {
     @Test fun filtrarMovimientosPorTipo() {
         abrirApp()
         compose.onNodeWithText("Movimientos").performClick()
-        compose.esperarTexto("Arriendo")
+        compose.desplazarHasta("Arriendo")
 
         compose.onNodeWithText("Ingresos").performClick()
         compose.esperarHasta("que se oculte el arriendo") { !hayTexto("Arriendo") }
@@ -92,6 +98,7 @@ class NavegacionTest {
 
         compose.onNodeWithText("Gastos").performClick()
         compose.esperarHasta("que se oculte el sueldo") { !hayTexto("Sueldo") }
+        compose.desplazarHasta("Arriendo")
         compose.onNodeWithText("Arriendo").assertIsDisplayed()
     }
 
@@ -110,7 +117,7 @@ class NavegacionTest {
         compose.esperarTexto("≈ ${formatearDolares(744.8)} al dólar observado")
 
         compose.onNodeWithText("Indicadores").performClick()
-        compose.esperarTexto("Unidad de fomento (UF)")
+        compose.desplazarHasta("Unidad de fomento (UF)")
         compose.onNodeWithText(formatearValorIndicador(41221.08)).assertIsDisplayed()
     }
 
@@ -141,6 +148,17 @@ class NavegacionTest {
 
     private fun ComposeTestRule.esperarTexto(texto: String) =
         esperarHasta("el texto \"$texto\"") { hayTexto(texto) }
+
+    /**
+     * Desplaza la lista de la pantalla hasta el elemento con `texto`. Un
+     * LazyColumn solo crea los elementos VISIBLES: sin desplazar, el test
+     * dependería del tamaño de pantalla (pasaba en un teléfono alto y fallaba
+     * en el emulador más chico del CI). Reintenta mientras los datos cargan.
+     */
+    private fun ComposeTestRule.desplazarHasta(texto: String) =
+        esperarHasta("el elemento \"$texto\" en la lista") {
+            runCatching { onNode(hasScrollAction()).performScrollToNode(hasText(texto)) }.isSuccess
+        }
 
     /**
      * Espera a que se cumpla `condicion` con datos que llegan desde otro hilo

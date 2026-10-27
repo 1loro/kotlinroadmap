@@ -98,6 +98,14 @@ No se aplicó a `mindicador.cl` porque es un servidor de terceros: si cambia su 
 2. **tests-instrumentados**: levanta un emulador en la máquina de GitHub y corre los tests de UI.
 3. **release** (solo en `main`, si los anteriores pasan): genera el `.aab` firmado con la clave guardada en los *secrets* del repositorio.
 
+**Lección real de este proyecto.** La primera vez que el CI corrió los tests instrumentados, fallaron 2 que en local pasaban siempre. Pasos para encontrar la causa:
+1. Los logs de Actions requieren iniciar sesión, así que se agregó un paso que publica los tests fallidos como **anotaciones** (`::error`), visibles en el PR.
+2. Las anotaciones mostraron que no aparecían "Feria" ni "Arriendo", dos elementos al final de una lista.
+3. Causa: un `LazyColumn` solo crea los elementos **visibles**. El emulador del CI tiene una pantalla más chica que la del emulador local, así que esos elementos quedaban fuera.
+4. Se reprodujo en local achicando la pantalla (`adb shell wm size 720x1280`) y se corrigió el test para que **desplace la lista** hasta el elemento (`performScrollToNode`), como haría un usuario.
+
+Moraleja: un test de UI no debe depender del tamaño de la pantalla, y el CI sirve justamente para descubrir lo que "en mi máquina funciona".
+
 Esto es **CI** (integración continua). **CD** (entrega continua) sería agregar un paso que suba el `.aab` a Play Console, por ejemplo con la API de Google Play Developer, en el canal de pruebas internas.
 
 ## 5. Publicación
