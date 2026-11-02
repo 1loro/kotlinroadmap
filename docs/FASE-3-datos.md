@@ -75,7 +75,6 @@ Moraleja: un test intermitente no se "arregla" subiendo el timeout. Hay que medi
 | `./gradlew :app:connectedDebugAndroidTest` | `DaosTest`: Room con SQLite real en memoria. `NavegacionTest`: flujos completos con BD en memoria y API falsa, incluido el estado sin conexión |
 
 
-
 ## Cambio a indicadores de Chile (migración de la BD)
 
 Después de la Fase 5, la app se adaptó al contexto chileno:

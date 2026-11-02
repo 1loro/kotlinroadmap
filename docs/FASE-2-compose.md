@@ -52,4 +52,3 @@ Entregable cumplido: app multipantalla con navegación y lista interactiva, sin 
 | `./gradlew :app:testDebugUnitTest` | `LogicaTest`: resumen, parseo de montos, estado (JVM, rápido) |
 | `./gradlew :app:connectedDebugAndroidTest` | `NavegacionTest`: flujo completo en el emulador (agregar, ver, eliminar, filtrar) |
 
-
