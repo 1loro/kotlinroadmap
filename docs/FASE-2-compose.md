@@ -52,10 +52,3 @@ Entregable cumplido: app multipantalla con navegación y lista interactiva, sin 
 | `./gradlew :app:testDebugUnitTest` | `LogicaTest`: resumen, parseo de montos, estado (JVM, rápido) |
 | `./gradlew :app:connectedDebugAndroidTest` | `NavegacionTest`: flujo completo en el emulador (agregar, ver, eliminar, filtrar) |
 
-## Práctica (hazlo tú)
-
-1. **Fecha elegible:** hoy todo movimiento se guarda con `LocalDate.now()`. Agrega un campo que abra `DatePickerDialog` de Material 3.
-2. **Deslizar para borrar:** en `MovimientosScreen`, envuelve cada ítem en `SwipeToDismissBox`.
-3. **Nueva categoría:** agrega `EDUCACION("Educación", "📚", GASTO)` al enum. ¿Cuántos archivos tuviste que tocar? (Respuesta: uno, gracias a `Categoria.de(tipo)`.)
-4. **Pantalla de edición:** reutiliza `FormularioScreen` para editar un movimiento existente (pista: una ruta `EditarMovimiento(id)` y valores iniciales).
-5. Cambia `dynamicColor = true` en `Theme.kt` y cambia el fondo de pantalla del emulador.
