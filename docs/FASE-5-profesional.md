@@ -137,12 +137,4 @@ Play Store exige **App Bundle**. Google genera desde él APKs optimizados para c
 
 **Antes de publicar falta:** cambiar `applicationId` (Play Store no acepta `com.example.*`; por ejemplo `io.github.<usuario>.controlgastos`) y subir `versionCode` en cada versión.
 
-## Práctica (hazlo tú)
 
-1. **Revisa el PR de esta fase** en GitHub como si fueras el revisor: deja al menos un comentario.
-2. **Protege `main`:** *Settings → Branches → Add rule*: exige PR, CI verde y 1 aprobación.
-3. **Firma la release:** crea tu keystore con `keytool`, configura `keystore.properties` y genera el `.aab`.
-4. **Secrets de CI:** sube el keystore en base64 (`base64 -w0 controlgastos-upload.jks`) y las contraseñas como secrets del repo, y mira cómo el job `release` genera el `.aab` firmado.
-5. **Comprueba el cifrado:** con el *Device File Explorer* de Android Studio, descarga `databases/gastos_cifrada.db` e intenta abrirla con *DB Browser for SQLite*. No vas a poder.
-6. **Prueba `FLAG_SECURE`:** instala la release (`./gradlew :app:installRelease`) e intenta una captura de pantalla.
-7. **Desafío:** migra la BD sin cifrar a cifrada sin perder datos con `sqlcipher_export`, y escribe el test.
