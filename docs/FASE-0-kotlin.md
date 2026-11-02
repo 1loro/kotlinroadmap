@@ -36,10 +36,3 @@ En Android Studio también puedes pulsar el ▶ verde junto a `fun main()` en `M
 - **`data class`** genera automáticamente `equals`, `toString` y `copy`. Es ideal para modelos como `Movimiento`.
 - **Corrutinas:** `delay()` *suspende* (libera el hilo) y `Thread.sleep()` *bloquea*. En Android esto es crítico: si bloqueas el hilo principal, la app se congela.
 
-## Práctica (hazlo tú)
-
-1. Agrega `Operacion.POTENCIA("^")` a la calculadora y un test. Pista: `Math.pow` o `a.pow(b)`.
-2. Crea `class Triangulo(base, altura, ladoA, ladoB, ladoC) : Figura` y prueba `areaTotal`.
-3. En el ejercicio 14, agrega a `ResumenGastos` un campo `porcentajePorCategoria: Map<String, Double>`.
-4. Rompe un test a propósito (cambia un valor esperado), mira el mensaje de error y arréglalo.
-5. En el ejercicio 15, reemplaza `delay` por `Thread.sleep` y observa qué pasa con el tiempo paralelo en `main`. ¿Por qué?
