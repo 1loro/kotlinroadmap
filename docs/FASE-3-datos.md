@@ -74,14 +74,7 @@ Moraleja: un test intermitente no se "arregla" subiendo el timeout. Hay que medi
 | `./gradlew :app:testDebugUnitTest` | `LogicaTest` (incluye los estados carga/éxito/error) y `CotizacionesRepositoryTest`: Retrofit real contra **MockWebServer** (JSON correcto, HTTP 503, JSON inválido, servidor caído) |
 | `./gradlew :app:connectedDebugAndroidTest` | `DaosTest`: Room con SQLite real en memoria. `NavegacionTest`: flujos completos con BD en memoria y API falsa, incluido el estado sin conexión |
 
-## Práctica (hazlo tú)
 
-1. **Comprueba la persistencia:** agrega un gasto, cierra la app desde *Recientes* y vuelve a abrirla.
-2. **Comprueba el modo sin conexión:** activa el modo avión, abre "Indicadores" y mira el aviso. Desactívalo y desliza hacia abajo.
-3. **Mira la red:** en Logcat filtra por `okhttp` y verás `--> GET https://mindicador.cl/api`.
-4. **Explora la BD:** en Android Studio abre *App Inspection → Database Inspector* y ejecuta `SELECT categoria, SUM(monto) FROM movimientos GROUP BY categoria`.
-5. **Migración (desafío):** agrega `val nota: String? = null` a `MovimientoEntity`, sube a `version = 2` y escribe la `Migration(1, 2)` con `ALTER TABLE movimientos ADD COLUMN nota TEXT`.
-6. **Nueva consulta:** agrega al DAO `@Query("SELECT * FROM movimientos WHERE descripcion LIKE '%' || :texto || '%'")` y un buscador en la pantalla Movimientos.
 
 ## Cambio a indicadores de Chile (migración de la BD)
 
