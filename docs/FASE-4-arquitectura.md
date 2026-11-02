@@ -85,10 +85,3 @@ Técnicas que aparecen en los tests:
 
 Totales: 29 tests unitarios y 7 instrumentados.
 
-## Práctica (hazlo tú)
-
-1. **Rota el emulador** con el formulario a medio llenar: los datos se mantienen. Compáralo con el experimento de la Fase 2.
-2. **Muerte del proceso:** activa *Opciones de desarrollador → No conservar actividades*, elige el filtro "Gastos", sal con Home y vuelve. El filtro se conserva (SavedStateHandle), pero el texto del formulario no (solo vive en el ViewModel). ¿Cómo lo guardarías? Pista: `savedStateHandle.getStateFlow`.
-3. **Nuevo caso de uso:** crea `EliminarMovimientoUseCase` que impida borrar ingresos de más de 30 días, con su test usando `Clock.fixed`.
-4. **Test que falle primero (TDD):** escribe en `ViewModelsTest` un test para "el formulario recorta espacios del monto" y luego modifica el código hasta que pase.
-5. **Módulo Gradle (desafío):** mueve `domain/` a un módulo `:domain` de Kotlin puro (como `:fase0-kotlin`). El compilador impedirá entonces que el dominio importe Android por error.
