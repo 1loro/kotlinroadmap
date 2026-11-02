@@ -55,10 +55,4 @@ Ya verificado al abrir la app: `onCreate → onStart → onResume`.
 - Almacenamiento: **interno privado** (archivos y BD de la app, que nadie más ve; aquí irá Room), **DataStore** para preferencias, y **almacenamiento compartido** solo para archivos del usuario.
 - Conectividad: las peticiones de red nunca van en el hilo principal (corrutinas) y Android bloquea HTTP sin cifrar por defecto.
 
-## Práctica (hazlo tú)
 
-1. Ejecuta la app desde Android Studio (▶) y abre Logcat filtrando por `CicloDeVida`.
-2. Pulsa *Home* y vuelve a la app: ¿qué métodos se llaman?
-3. **Rota el emulador.** Verás `onDestroy` y luego `onCreate` otra vez. La Activity se destruye y se recrea en cada rotación, y por eso en la Fase 4 usaremos `ViewModel`.
-4. Abre `ui/componentes/MovimientoItem.kt` en la vista *Split*: el `@Preview` dibuja el componente sin ejecutar la app. Cambia la descripción del ejemplo y mira cómo se actualiza. (El "Hola Mundo" original está en el historial de Git: `git show 12b76b7`.)
-5. Cambia el color `primary` de `LightColors` en `Theme.kt` y activa el modo oscuro del emulador.
